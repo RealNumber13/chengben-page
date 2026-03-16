@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绩效管理-成本导入</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-bg { background-color: #587ef5; }
+        .sidebar-item-active { background-color: #e0e7ff; color: #587ef5; border-right: 4px solid #1e40af; }
+        .table-header { background-color: #f8fafc; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div id="app" class="flex h-screen">
+        <div class="sidebar-bg w-64 text-white flex flex-col shrink-0">
+            <div class="p-4 flex flex-col items-center border-b border-blue-400/30">
+                <div class="bg-white p-2 rounded-lg mb-2">
+                    <span class="text-blue-600 font-bold text-xl">XIAOTI</span>
+                </div>
+                <span class="text-xs opacity-80 uppercase tracking-widest">小题旅行</span>
+            </div>
+            <nav class="flex-1 mt-4 overflow-y-auto">
+                <div v-for="menu in menus" :key="menu.name">
+                    <div class="px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-blue-500/50" @click="menu.open = !menu.open">
+                        <div class="flex items-center gap-3">
+                            <i :class="menu.icon"></i>
+                            <span>{{ menu.name }}</span>
+                        </div>
+                        <i :class="menu.open ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="text-xs"></i>
+                    </div>
+                    <div v-if="menu.open" class="bg-white/10">
+                        <div v-for="sub in menu.subMenus" :key="sub" 
+                             :class="['pl-12 py-2 cursor-pointer hover:text-blue-100 transition-colors', sub === '成本导入' ? 'sidebar-item-active' : '']">
+                            {{ sub }}
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white h-16 flex items-center justify-between px-8 shadow-sm">
+                <h2 class="text-lg font-medium text-gray-800">成本数据同步与确认</h2>
+                <button @click="showImportModal = true" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> 成本导入
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-auto p-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="table-header text-gray-500 border-b border-gray-100">
+                                <th class="p-4 font-semibold">月份</th>
+                                <th class="p-4 font-semibold">飞书数据状态</th>
+                                <th class="p-4 font-semibold text-center">人事老师确认</th>
+                                <th class="p-4 font-semibold text-center">财务老师确认</th>
+                                <th class="p-4 font-semibold">入库状态</th>
+                                <th class="p-4 font-semibold text-center">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-600">
+                            <tr v-for="(item, index) in tableData" :key="index" class="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
+                                <td class="p-4 font-medium">{{ item.month }}月</td>
+                                <td class="p-4 text-sm">
+                                    <span class="text-green-600 flex items-center gap-1">
+                                        <i class="fa-solid fa-circle-check"></i> 已拉取
+                                    </span>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <button v-if="!item.hrConfirm" @click="confirmData(index, 'hr')" class="text-sm bg-orange-50 text-orange-600 px-3 py-1 rounded border border-orange-200 hover:bg-orange-100">确认</button>
+                                    <span v-else class="text-blue-600 text-sm"><i class="fa-solid fa-user-check"></i> 已确认</span>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <button v-if="!item.finConfirm" @click="confirmData(index, 'fin')" class="text-sm bg-orange-50 text-orange-600 px-3 py-1 rounded border border-orange-200 hover:bg-orange-100">确认</button>
+                                    <span v-else class="text-blue-600 text-sm"><i class="fa-solid fa-stamp"></i> 已确认</span>
+                                </td>
+                                <td class="p-4">
+                                    <span :class="item.hrConfirm && item.finConfirm ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'" class="px-3 py-1 rounded-full text-xs font-bold">
+                                        {{ item.hrConfirm && item.finConfirm ? '已入库' : '待确认' }}
+                                    </span>
+                                </td>
+                                <td class="p-4 text-center">
+                                    <button @click="viewDetails(index)" class="text-sm px-3 py-1 rounded border border-blue-200 text-blue-600 hover:bg-blue-50">查看</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-8 flex justify-center hidden">
+                    <div class="bg-white border-2 border-dashed border-gray-200 p-8 rounded-xl max-w-2xl text-center">
+                        <p class="text-xl text-gray-500 font-medium">请确认数据是否已核对，此数据用于绩效计算使用！</p>
+                        <p class="text-sm text-gray-400 mt-2 italic">注：需人事与财务老师共同确认后，数据方可正式进入库系统。</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div v-if="showImportModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl shadow-2xl w-[500px] overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-800">从飞书拉取成本数据</h3>
+                    <button @click="showImportModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="p-8">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">选择考核月份</label>
+                            <select v-model="importMonth" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="2024-03">2024年 03月</option>
+                                <option value="2024-04">2024年 04月</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6 bg-gray-50 flex justify-end gap-4">
+                    <button @click="showImportModal = false" class="px-6 py-2 text-gray-600 hover:text-gray-800">取消</button>
+                    <button @click="handleImport" class="px-8 py-2 bg-blue-600 text-white rounded shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2">
+                        <i v-if="loading" class="fa-solid fa-spinner animate-spin"></i>
+                        {{ loading ? '同步中...' : '开始拉取' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div v-if="showConfirmModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl shadow-2xl w-[560px] overflow-hidden">
+                <div class="p-6 border-b border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-800">确认提醒</h3>
+                </div>
+                <div class="p-8">
+                    <div class="border-2 border-dashed border-gray-200 p-8 rounded-xl text-center">
+                        <p class="text-xl text-gray-600 font-medium">请确认数据是否已核对，此数据用于绩效计算使用！</p>
+                        <p class="text-sm text-gray-400 mt-2 italic">注：需人事与财务老师共同确认后，数据方可正式进入库系统。</p>
+                    </div>
+                </div>
+                <div class="p-6 bg-gray-50 flex justify-end gap-4">
+                    <button @click="showConfirmModal = false" class="px-6 py-2 text-gray-600 hover:text-gray-800">取消</button>
+                    <button @click="confirmSubmit" class="px-8 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700">确认无误，提交</button>
+                </div>
+            </div>
+        </div>
+        <div v-if="showDetailsModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl shadow-2xl w-[720px] max-h-[80vh] overflow-hidden flex flex-col">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-800">导入成本明细（{{ currentMonth }}月）</h3>
+                    <button @click="showDetailsModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="p-6 overflow-auto">
+                    <template v-if="currentDetails && currentDetails.length">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="table-header text-gray-500 text-sm border-b border-gray-100">
+                                    <th class="p-3 font-semibold">序号</th>
+                                    <th class="p-3 font-semibold">名称</th>
+                                    <th class="p-3 font-semibold">类别</th>
+                                    <th class="p-3 font-semibold text-right">金额</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-700">
+                                <tr v-for="(d, i) in currentDetails" :key="i" class="border-b border-gray-50">
+                                    <td class="p-3 text-sm">{{ i + 1 }}</td>
+                                    <td class="p-3 text-sm">{{ d.name }}</td>
+                                    <td class="p-3 text-sm">{{ d.category }}</td>
+                                    <td class="p-3 text-sm text-right">￥{{ d.amount.toFixed(2) }}</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="border-t border-gray-100">
+                                    <td class="p-3 text-sm text-gray-500" colspan="3">合计</td>
+                                    <td class="p-3 text-sm text-right font-semibold">￥{{ currentDetails.reduce((s, x) => s + x.amount, 0).toFixed(2) }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </template>
+                    <div v-else class="text-center text-gray-500 py-12">
+                        暂无可展示的成本明细
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 flex justify-end">
+                    <button @click="showDetailsModal = false" class="px-6 py-2 text-gray-600 hover:text-gray-800">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref } = Vue;
+
+        createApp({
+            setup() {
+                const showImportModal = ref(false);
+                const loading = ref(false);
+                const importMonth = ref('2024-04');
+
+                const showDetailsModal = ref(false);
+                const currentMonth = ref('');
+                const currentDetails = ref([]);
+                const showConfirmModal = ref(false);
+                const pendingRole = ref('');
+                const pendingIndex = ref(-1);
+
+                const menus = ref([
+                    { name: '办公', icon: 'fa-solid fa-house', open: false, subMenus: ['日常办公', '考勤查看'] },
+                    { name: '客户', icon: 'fa-solid fa-envelope', open: false, subMenus: ['公海池', '我的客户'] },
+                    { name: '项目', icon: 'fa-solid fa-briefcase', open: false, subMenus: ['项目立项', '资源分配'] },
+                    { name: '财务', icon: 'fa-solid fa-sack-dollar', open: false, subMenus: ['报销审批', '发票管理'] },
+                    { name: '人事', icon: 'fa-solid fa-user-group', open: true, subMenus: ['指标库', '模板库', '模板绑定', '绩效考核', '我的绩效', '成本导入'] }
+                ]);
+
+                const tableData = ref([
+                    { month: 1, type: '项目成本', hrConfirm: true,  finConfirm: true,  details: [
+                        { name: '项目A人员成本', category: '人员',   amount: 12345.67 },
+                        { name: '项目A云资源',   category: '云资源', amount: 2345.89 }
+                    ]},
+                    { month: 2, type: '项目成本', hrConfirm: true,  finConfirm: true,  details: [
+                        { name: '项目B外包',   category: '外包',   amount: 8000.00 }
+                    ]},
+                    { month: 3, type: '管理成本', hrConfirm: true,  finConfirm: false, details: [
+                        { name: '行政办公',   category: '管理',   amount: 1500.00 },
+                        { name: '培训费用',   category: '培训',   amount: 980.00 }
+                    ]},
+                    { month: 4, type: '项目成本', hrConfirm: false, finConfirm: false, details: [] }
+                ]);
+
+                const handleImport = () => {
+                    loading.value = true;
+                    setTimeout(() => {
+                        loading.value = false;
+                        showImportModal.value = false;
+                        const monthNum = parseInt(importMonth.value.split('-')[1]);
+                        tableData.value.push({
+                            month: monthNum,
+                            hrConfirm: false,
+                            finConfirm: false,
+                            details: [
+                                { name: '成本样例1', category: '人员', amount: 2000.00 },
+                                { name: '成本样例2', category: '资源', amount: 1200.50 }
+                            ]
+                        });
+                        alert(`已成功拉取 ${importMonth.value} 飞书表外成本数据！请通知财务及人事老师核对。`);
+                    }, 1500);
+                };
+
+                const confirmData = (index, role) => {
+                    pendingIndex.value = index;
+                    pendingRole.value = role;
+                    showConfirmModal.value = true;
+                };
+                const confirmSubmit = () => {
+                    if (pendingIndex.value >= 0) {
+                        if (pendingRole.value === 'hr')  tableData.value[pendingIndex.value].hrConfirm  = true;
+                        if (pendingRole.value === 'fin') tableData.value[pendingIndex.value].finConfirm = true;
+                    }
+                    showConfirmModal.value = false;
+                    pendingIndex.value = -1;
+                    pendingRole.value = '';
+                };
+
+                const viewDetails = (index) => {
+                    const row = tableData.value[index];
+                    currentMonth.value = row.month;
+                    currentDetails.value = Array.isArray(row.details) ? row.details : [];
+                    showDetailsModal.value = true;
+                };
+
+                return {
+                    menus, tableData, showImportModal, loading, importMonth,
+                    showDetailsModal, currentDetails, currentMonth,
+                    showConfirmModal, handleImport, confirmData, confirmSubmit, viewDetails
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
