@@ -55,8 +55,6 @@
                         <thead>
                             <tr class="table-header text-gray-500 border-b border-gray-100">
                                 <th class="p-4 font-semibold">月份</th>
-                                <th class="p-4 font-semibold">飞书数据状态</th>
-                                <th class="p-4 font-semibold text-center">人事老师确认</th>
                                 <th class="p-4 font-semibold text-center">财务老师确认</th>
                                 <th class="p-4 font-semibold">入库状态</th>
                                 <th class="p-4 font-semibold text-center">操作</th>
@@ -65,15 +63,6 @@
                         <tbody class="text-gray-600">
                             <tr v-for="(item, index) in tableData" :key="index" class="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
                                 <td class="p-4 font-medium">{{ item.month }}月</td>
-                                <td class="p-4 text-sm">
-                                    <span class="text-green-600 flex items-center gap-1">
-                                        <i class="fa-solid fa-circle-check"></i> 已拉取
-                                    </span>
-                                </td>
-                                <td class="p-4 text-center">
-                                    <button v-if="!item.hrConfirm" @click="confirmData(index, 'hr')" class="text-sm bg-orange-50 text-orange-600 px-3 py-1 rounded border border-orange-200 hover:bg-orange-100">确认</button>
-                                    <span v-else class="text-blue-600 text-sm"><i class="fa-solid fa-user-check"></i> 已确认</span>
-                                </td>
                                 <td class="p-4 text-center">
                                     <button v-if="!item.finConfirm" @click="confirmData(index, 'fin')" class="text-sm bg-orange-50 text-orange-600 px-3 py-1 rounded border border-orange-200 hover:bg-orange-100">确认</button>
                                     <span v-else class="text-blue-600 text-sm"><i class="fa-solid fa-stamp"></i> 已确认</span>
@@ -84,7 +73,13 @@
                                     </span>
                                 </td>
                                 <td class="p-4 text-center">
-                                    <button @click="viewDetails(index)" class="text-sm px-3 py-1 rounded border border-blue-200 text-blue-600 hover:bg-blue-50">查看</button>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button @click="viewDetails(index)" class="text-sm px-3 py-1 rounded border border-blue-200 text-blue-600 hover:bg-blue-50">查看</button>
+                                        <button @click="viewHistory(index)" class="text-sm px-3 py-1 rounded border border-purple-200 text-purple-600 hover:bg-purple-50 relative">
+                                            历史
+                                            <span v-if="item.importHistory && item.importHistory.length > 1" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{{ item.importHistory.length }}</span>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -185,6 +180,50 @@
                 </div>
             </div>
         </div>
+        <div v-if="showHistoryModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl shadow-2xl w-[680px] max-h-[80vh] overflow-hidden flex flex-col">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-800">导入历史记录（{{ currentMonth }}月）</h3>
+                    <button @click="showHistoryModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="p-6 overflow-auto">
+                    <template v-if="currentHistory && currentHistory.length">
+                        <div class="space-y-3">
+                            <div v-for="(record, i) in currentHistory" :key="i" class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors relative">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <span class="text-sm font-semibold text-gray-700">版本 {{ record.version }}</span>
+                                            <span v-if="i === currentHistory.length - 1" class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-medium">当前使用</span>
+                                        </div>
+                                        <div class="text-sm text-gray-600 space-y-1">
+                                            <div class="flex items-center gap-2">
+                                                <i class="fa-solid fa-clock text-gray-400"></i>
+                                                <span>导入时间：{{ record.time }}</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <i class="fa-solid fa-user text-gray-400"></i>
+                                                <span>操作人：{{ record.operator }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <i class="fa-solid fa-file-import text-purple-500 text-2xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <div v-else class="text-center text-gray-500 py-12">
+                        <i class="fa-solid fa-inbox text-4xl mb-3 text-gray-300"></i>
+                        <p>暂无导入记录</p>
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 flex justify-end">
+                    <button @click="showHistoryModal = false" class="px-6 py-2 text-gray-600 hover:text-gray-800">关闭</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -202,6 +241,9 @@
                 const showConfirmModal = ref(false);
                 const pendingRole = ref('');
                 const pendingIndex = ref(-1);
+                
+                const showHistoryModal = ref(false);
+                const currentHistory = ref([]);
 
                 const menus = ref([
                     { name: '办公', icon: 'fa-solid fa-house', open: false, subMenus: ['日常办公', '考勤查看'] },
@@ -215,15 +257,22 @@
                     { month: 1, type: '项目成本', hrConfirm: true,  finConfirm: true,  details: [
                         { name: '项目A人员成本', category: '人员',   amount: 12345.67 },
                         { name: '项目A云资源',   category: '云资源', amount: 2345.89 }
+                    ], importHistory: [
+                        { time: '2024-01-05 14:30:25', operator: '系统管理员', version: 1 }
                     ]},
                     { month: 2, type: '项目成本', hrConfirm: true,  finConfirm: true,  details: [
                         { name: '项目B外包',   category: '外包',   amount: 8000.00 }
+                    ], importHistory: [
+                        { time: '2024-02-03 09:15:10', operator: '系统管理员', version: 1 }
                     ]},
                     { month: 3, type: '管理成本', hrConfirm: true,  finConfirm: false, details: [
                         { name: '行政办公',   category: '管理',   amount: 1500.00 },
                         { name: '培训费用',   category: '培训',   amount: 980.00 }
+                    ], importHistory: [
+                        { time: '2024-03-01 10:20:30', operator: '系统管理员', version: 1 },
+                        { time: '2024-03-02 16:45:12', operator: '财务部', version: 2 }
                     ]},
-                    { month: 4, type: '项目成本', hrConfirm: false, finConfirm: false, details: [] }
+                    { month: 4, type: '项目成本', hrConfirm: false, finConfirm: false, details: [], importHistory: [] }
                 ]);
 
                 const handleImport = () => {
@@ -232,16 +281,44 @@
                         loading.value = false;
                         showImportModal.value = false;
                         const monthNum = parseInt(importMonth.value.split('-')[1]);
-                        tableData.value.push({
-                            month: monthNum,
-                            hrConfirm: false,
-                            finConfirm: false,
-                            details: [
+                        
+                        const now = new Date();
+                        const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+                        
+                        const existingIndex = tableData.value.findIndex(item => item.month === monthNum);
+                        
+                        if (existingIndex >= 0) {
+                            const existing = tableData.value[existingIndex];
+                            const newVersion = existing.importHistory.length + 1;
+                            existing.importHistory.push({
+                                time: timeStr,
+                                operator: '系统管理员',
+                                version: newVersion
+                            });
+                            existing.details = [
                                 { name: '成本样例1', category: '人员', amount: 2000.00 },
                                 { name: '成本样例2', category: '资源', amount: 1200.50 }
-                            ]
-                        });
-                        alert(`已成功拉取 ${importMonth.value} 飞书表外成本数据！请通知财务及人事老师核对。`);
+                            ];
+                            existing.hrConfirm = false;
+                            existing.finConfirm = false;
+                            alert(`已成功重新拉取 ${importMonth.value} 飞书表外成本数据（版本 ${newVersion}）！请通知财务及人事老师核对。`);
+                        } else {
+                            tableData.value.push({
+                                month: monthNum,
+                                hrConfirm: false,
+                                finConfirm: false,
+                                details: [
+                                    { name: '成本样例1', category: '人员', amount: 2000.00 },
+                                    { name: '成本样例2', category: '资源', amount: 1200.50 }
+                                ],
+                                importHistory: [{
+                                    time: timeStr,
+                                    operator: '系统管理员',
+                                    version: 1
+                                }]
+                            });
+                            alert(`已成功拉取 ${importMonth.value} 飞书表外成本数据！请通知财务及人事老师核对。`);
+                        }
                     }, 1500);
                 };
 
@@ -267,10 +344,18 @@
                     showDetailsModal.value = true;
                 };
 
+                const viewHistory = (index) => {
+                    const row = tableData.value[index];
+                    currentMonth.value = row.month;
+                    currentHistory.value = Array.isArray(row.importHistory) ? row.importHistory : [];
+                    showHistoryModal.value = true;
+                };
+
                 return {
                     menus, tableData, showImportModal, loading, importMonth,
                     showDetailsModal, currentDetails, currentMonth,
-                    showConfirmModal, handleImport, confirmData, confirmSubmit, viewDetails
+                    showConfirmModal, handleImport, confirmData, confirmSubmit, viewDetails,
+                    showHistoryModal, currentHistory, viewHistory
                 }
             }
         }).mount('#app')
