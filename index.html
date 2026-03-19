@@ -56,7 +56,6 @@
                         <thead>
                             <tr class="table-header text-gray-500 border-b border-gray-100">
                                 <th class="p-4 font-semibold">月份</th>
-                                <th class="p-4 font-semibold text-center">财务老师确认</th>
                                 <th class="p-4 font-semibold">入库状态</th>
                                 <th class="p-4 font-semibold text-center">操作</th>
                             </tr>
@@ -64,23 +63,16 @@
                         <tbody class="text-gray-600">
                             <tr v-for="(item, index) in tableData" :key="index" class="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
                                 <td class="p-4 font-medium">{{ item.month }}月</td>
-                                <td class="p-4 text-center">
-                                    <button v-if="!item.finConfirm" @click="confirmData(index, 'fin')" class="text-sm bg-orange-50 text-orange-600 px-3 py-1 rounded border border-orange-200 hover:bg-orange-100">确认</button>
-                                    <span v-else class="text-blue-600 text-sm"><i class="fa-solid fa-stamp"></i> 已确认</span>
-                                </td>
                                 <td class="p-4">
-                                    <span :class="item.hrConfirm && item.finConfirm ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'" class="px-3 py-1 rounded-full text-xs font-bold">
-                                        {{ item.hrConfirm && item.finConfirm ? '已入库' : '待确认' }}
+                                    <span :class="item.confirmed ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'" class="px-3 py-1 rounded-full text-xs font-bold">
+                                        {{ item.confirmed ? '已入库' : '待确认' }}
                                     </span>
                                 </td>
                                 <td class="p-4 text-center">
-                                    <div class="flex items-center justify-center gap-2">
-                                        <button @click="viewDetails(index)" class="text-sm px-3 py-1 rounded border border-blue-200 text-blue-600 hover:bg-blue-50">查看</button>
-                                        <button @click="viewHistory(index)" class="text-sm px-3 py-1 rounded border border-purple-200 text-purple-600 hover:bg-purple-50 relative">
-                                            历史
-                                            <span v-if="item.importHistory && item.importHistory.length > 1" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{{ item.importHistory.length }}</span>
-                                        </button>
-                                    </div>
+                                    <button @click="viewHistory(index)" class="text-sm px-3 py-1 rounded border border-blue-200 text-blue-600 hover:bg-blue-50 relative">
+                                        查看
+                                        <span v-if="item.importHistory && item.importHistory.length > 1" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{{ item.importHistory.length }}</span>
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -99,25 +91,46 @@
         <div v-if="showImportModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div class="bg-white rounded-xl shadow-2xl w-[500px] overflow-hidden">
                 <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="text-xl font-bold text-gray-800">从飞书拉取成本数据</h3>
-                    <button @click="showImportModal = false" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    <h3 class="text-xl font-bold text-gray-800">上传成本表格</h3>
+                    <button @click="closeImportModal" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
                 <div class="p-8">
                     <div class="space-y-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">选择考核月份</label>
                             <select v-model="importMonth" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="2024-03">2024年 03月</option>
-                                <option value="2024-04">2024年 04月</option>
+                                <option value="1">1月</option>
+                                <option value="2">2月</option>
+                                <option value="3">3月</option>
+                                <option value="4">4月</option>
+                                <option value="5">5月</option>
+                                <option value="6">6月</option>
+                                <option value="7">7月</option>
+                                <option value="8">8月</option>
+                                <option value="9">9月</option>
+                                <option value="10">10月</option>
+                                <option value="11">11月</option>
+                                <option value="12">12月</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">上传成本表格文件</label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors cursor-pointer" @click="$refs.fileInput.click()">
+                                <input ref="fileInput" type="file" accept=".xlsx,.xls" @change="handleFileSelect" class="hidden">
+                                <i class="fa-solid fa-cloud-arrow-up text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-sm text-gray-600" v-if="!selectedFile">点击选择文件或拖拽文件到此处</p>
+                                <p class="text-sm text-blue-600 font-medium" v-else>{{ selectedFile.name }}</p>
+                                <p class="text-xs text-gray-400 mt-2">支持格式：.xlsx, .xls</p>
+                            </div>
+                            <p v-if="uploadError" class="text-sm text-red-600 mt-2"><i class="fa-solid fa-circle-exclamation"></i> {{ uploadError }}</p>
                         </div>
                     </div>
                 </div>
                 <div class="p-6 bg-gray-50 flex justify-end gap-4">
-                    <button @click="showImportModal = false" class="px-6 py-2 text-gray-600 hover:text-gray-800">取消</button>
-                    <button @click="handleImport" class="px-8 py-2 bg-blue-600 text-white rounded shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2">
+                    <button @click="closeImportModal" class="px-6 py-2 text-gray-600 hover:text-gray-800">取消</button>
+                    <button @click="handleImport" :disabled="!selectedFile || loading" class="px-8 py-2 bg-blue-600 text-white rounded shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed">
                         <i v-if="loading" class="fa-solid fa-spinner animate-spin"></i>
-                        {{ loading ? '同步中...' : '开始拉取' }}
+                        {{ loading ? '上传中...' : '确认上传' }}
                     </button>
                 </div>
             </div>
@@ -176,8 +189,9 @@
                         暂无可展示的成本明细
                     </div>
                 </div>
-                <div class="p-4 bg-gray-50 flex justify-end">
+                <div class="p-4 bg-gray-50 flex justify-end gap-4">
                     <button @click="showDetailsModal = false" class="px-6 py-2 text-gray-600 hover:text-gray-800">关闭</button>
+                    <button @click="confirmDataForStorage" class="px-8 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700">确认</button>
                 </div>
             </div>
         </div>
@@ -190,7 +204,7 @@
                 <div class="p-6 overflow-auto">
                     <template v-if="currentHistory && currentHistory.length">
                         <div class="space-y-3">
-                            <div v-for="(record, i) in currentHistory" :key="i" class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors relative">
+                            <div v-for="(record, i) in currentHistory" :key="i" @click="viewHistoryDetails(record)" class="border border-gray-200 rounded-lg p-4 hover:bg-blue-50 hover:border-blue-300 transition-colors relative cursor-pointer">
                                 <div class="flex items-start justify-between">
                                     <div class="flex-1">
                                         <div class="flex items-center gap-3 mb-2">
@@ -208,8 +222,9 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="text-right">
+                                    <div class="text-right flex flex-col items-center gap-1">
                                         <i class="fa-solid fa-file-import text-purple-500 text-2xl"></i>
+                                        <span class="text-xs text-blue-600">点击查看</span>
                                     </div>
                                 </div>
                             </div>
@@ -234,7 +249,9 @@
             setup() {
                 const showImportModal = ref(false);
                 const loading = ref(false);
-                const importMonth = ref('2024-04');
+                const importMonth = ref('4');
+                const selectedFile = ref(null);
+                const uploadError = ref('');
 
                 const showDetailsModal = ref(false);
                 const currentMonth = ref('');
@@ -242,6 +259,7 @@
                 const showConfirmModal = ref(false);
                 const pendingRole = ref('');
                 const pendingIndex = ref(-1);
+                const pendingMonthForConfirm = ref(-1);
                 
                 const showHistoryModal = ref(false);
                 const currentHistory = ref([]);
@@ -255,38 +273,110 @@
                 ]);
 
                 const tableData = ref([
-                    { month: 1, type: '项目成本', hrConfirm: true,  finConfirm: true,  details: [
+                    { month: 1, confirmed: true, details: [
                         { name: '项目A人员成本', category: '人员',   amount: 12345.67 },
                         { name: '项目A云资源',   category: '云资源', amount: 2345.89 }
                     ], importHistory: [
-                        { time: '2024-01-05 14:30:25', operator: '系统管理员', version: 1 }
+                        { time: '2024-01-05 14:30:25', operator: '系统管理员', version: 1, details: [
+                            { name: '项目A人员成本', category: '人员',   amount: 12345.67 },
+                            { name: '项目A云资源',   category: '云资源', amount: 2345.89 }
+                        ]}
                     ]},
-                    { month: 2, type: '项目成本', hrConfirm: true,  finConfirm: true,  details: [
+                    { month: 2, confirmed: true, details: [
                         { name: '项目B外包',   category: '外包',   amount: 8000.00 }
                     ], importHistory: [
-                        { time: '2024-02-03 09:15:10', operator: '系统管理员', version: 1 }
+                        { time: '2024-02-03 09:15:10', operator: '系统管理员', version: 1, details: [
+                            { name: '项目B外包',   category: '外包',   amount: 8000.00 }
+                        ]}
                     ]},
-                    { month: 3, type: '管理成本', hrConfirm: true,  finConfirm: false, details: [
+                    { month: 3, confirmed: false, details: [
                         { name: '行政办公',   category: '管理',   amount: 1500.00 },
                         { name: '培训费用',   category: '培训',   amount: 980.00 }
                     ], importHistory: [
-                        { time: '2024-03-01 10:20:30', operator: '系统管理员', version: 1 },
-                        { time: '2024-03-02 16:45:12', operator: '财务部', version: 2 }
+                        { time: '2024-03-01 10:20:30', operator: '系统管理员', version: 1, details: [
+                            { name: '行政办公',   category: '管理',   amount: 1500.00 },
+                            { name: '培训费用',   category: '培训',   amount: 980.00 }
+                        ]},
+                        { time: '2024-03-02 16:45:12', operator: '财务部', version: 2, details: [
+                            { name: '行政办公',   category: '管理',   amount: 1500.00 },
+                            { name: '培训费用',   category: '培训',   amount: 980.00 }
+                        ]}
                     ]},
-                    { month: 4, type: '项目成本', hrConfirm: false, finConfirm: false, details: [], importHistory: [] }
+                    { month: 4, confirmed: false, details: [], importHistory: [] }
                 ]);
 
-                const handleImport = () => {
+                const handleFileSelect = (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    
+                    uploadError.value = '';
+                    
+                    const validExtensions = ['.xlsx', '.xls'];
+                    const fileName = file.name.toLowerCase();
+                    const isValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+                    
+                    if (!isValidExtension) {
+                        uploadError.value = '文件格式不正确，请上传 .xlsx 或 .xls 格式的文件';
+                        selectedFile.value = null;
+                        return;
+                    }
+                    
+                    selectedFile.value = file;
+                };
+
+                const closeImportModal = () => {
+                    showImportModal.value = false;
+                    selectedFile.value = null;
+                    uploadError.value = '';
+                };
+
+                const validateExcelFormat = (file) => {
+                    return new Promise((resolve) => {
+                        const requiredColumns = ['名称', '类别', '金额'];
+                        const hasValidFormat = Math.random() > 0.3;
+                        
+                        setTimeout(() => {
+                            resolve({
+                                valid: hasValidFormat,
+                                columns: hasValidFormat ? requiredColumns : ['错误列1', '错误列2']
+                            });
+                        }, 500);
+                    });
+                };
+
+                const handleImport = async () => {
+                    if (!selectedFile.value) {
+                        uploadError.value = '请先选择文件';
+                        return;
+                    }
+                    
                     loading.value = true;
+                    uploadError.value = '';
+                    
+                    const validation = await validateExcelFormat(selectedFile.value);
+                    
+                    if (!validation.valid) {
+                        loading.value = false;
+                        uploadError.value = '表格字段不符合要求，无法上传。请确保表格包含：名称、类别、金额等必需字段';
+                        return;
+                    }
+                    
                     setTimeout(() => {
                         loading.value = false;
                         showImportModal.value = false;
-                        const monthNum = parseInt(importMonth.value.split('-')[1]);
+                        selectedFile.value = null;
+                        
+                        const monthNum = parseInt(importMonth.value);
                         
                         const now = new Date();
                         const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
                         
                         const existingIndex = tableData.value.findIndex(item => item.month === monthNum);
+                        
+                        const newDetails = [
+                            { name: '成本样例1', category: '人员', amount: 2000.00 },
+                            { name: '成本样例2', category: '资源', amount: 1200.50 }
+                        ];
                         
                         if (existingIndex >= 0) {
                             const existing = tableData.value[existingIndex];
@@ -294,31 +384,25 @@
                             existing.importHistory.push({
                                 time: timeStr,
                                 operator: '系统管理员',
-                                version: newVersion
+                                version: newVersion,
+                                details: newDetails
                             });
-                            existing.details = [
-                                { name: '成本样例1', category: '人员', amount: 2000.00 },
-                                { name: '成本样例2', category: '资源', amount: 1200.50 }
-                            ];
-                            existing.hrConfirm = false;
-                            existing.finConfirm = false;
-                            alert(`已成功重新拉取 ${importMonth.value} 飞书表外成本数据（版本 ${newVersion}）！请通知财务及人事老师核对。`);
+                            existing.details = newDetails;
+                            existing.confirmed = false;
+                            alert(`已成功上传 ${monthNum}月 成本数据（版本 ${newVersion}）！`);
                         } else {
                             tableData.value.push({
                                 month: monthNum,
-                                hrConfirm: false,
-                                finConfirm: false,
-                                details: [
-                                    { name: '成本样例1', category: '人员', amount: 2000.00 },
-                                    { name: '成本样例2', category: '资源', amount: 1200.50 }
-                                ],
+                                confirmed: false,
+                                details: newDetails,
                                 importHistory: [{
                                     time: timeStr,
                                     operator: '系统管理员',
-                                    version: 1
+                                    version: 1,
+                                    details: newDetails
                                 }]
                             });
-                            alert(`已成功拉取 ${importMonth.value} 飞书表外成本数据！请通知财务及人事老师核对。`);
+                            alert(`已成功上传 ${monthNum}月 成本数据！`);
                         }
                     }, 1500);
                 };
@@ -329,13 +413,12 @@
                     showConfirmModal.value = true;
                 };
                 const confirmSubmit = () => {
-                    if (pendingIndex.value >= 0) {
-                        if (pendingRole.value === 'hr')  tableData.value[pendingIndex.value].hrConfirm  = true;
-                        if (pendingRole.value === 'fin') tableData.value[pendingIndex.value].finConfirm = true;
+                    if (pendingMonthForConfirm.value >= 0) {
+                        tableData.value[pendingMonthForConfirm.value].confirmed = true;
+                        alert(`${currentMonth.value}月成本数据已确认入库！`);
                     }
                     showConfirmModal.value = false;
-                    pendingIndex.value = -1;
-                    pendingRole.value = '';
+                    pendingMonthForConfirm.value = -1;
                 };
 
                 const viewDetails = (index) => {
@@ -349,7 +432,19 @@
                     const row = tableData.value[index];
                     currentMonth.value = row.month;
                     currentHistory.value = Array.isArray(row.importHistory) ? row.importHistory : [];
+                    pendingMonthForConfirm.value = index;
                     showHistoryModal.value = true;
+                };
+
+                const viewHistoryDetails = (record) => {
+                    currentDetails.value = Array.isArray(record.details) ? record.details : [];
+                    showHistoryModal.value = false;
+                    showDetailsModal.value = true;
+                };
+
+                const confirmDataForStorage = () => {
+                    showDetailsModal.value = false;
+                    showConfirmModal.value = true;
                 };
 
                 const navigateToPage = (pageName) => {
@@ -362,8 +457,10 @@
                 return {
                     menus, tableData, showImportModal, loading, importMonth,
                     showDetailsModal, currentDetails, currentMonth,
-                    showConfirmModal, handleImport, confirmData, confirmSubmit, viewDetails,
-                    showHistoryModal, currentHistory, viewHistory, navigateToPage
+                    showConfirmModal, handleImport, confirmSubmit, viewDetails,
+                    showHistoryModal, currentHistory, viewHistory, viewHistoryDetails, 
+                    confirmDataForStorage, navigateToPage,
+                    selectedFile, uploadError, handleFileSelect, closeImportModal
                 }
             }
         }).mount('#app')
