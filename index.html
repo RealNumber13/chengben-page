@@ -33,7 +33,8 @@
                     </div>
                     <div v-if="menu.open" class="bg-white/10">
                         <div v-for="sub in menu.subMenus" :key="sub" 
-                             :class="['pl-12 py-2 cursor-pointer hover:text-blue-100 transition-colors', sub === '成本导入' ? 'sidebar-item-active' : '']">
+                             :class="['pl-12 py-2 cursor-pointer hover:text-blue-100 transition-colors', sub === '成本导入' ? 'sidebar-item-active' : '']"
+                             @click="navigateToPage(sub)">
                             {{ sub }}
                         </div>
                     </div>
@@ -351,11 +352,18 @@
                     showHistoryModal.value = true;
                 };
 
+                const navigateToPage = (pageName) => {
+                    if (pageName === '成本导入') {
+                        return;
+                    }
+                    window.location.href = 'base-template.html';
+                };
+
                 return {
                     menus, tableData, showImportModal, loading, importMonth,
                     showDetailsModal, currentDetails, currentMonth,
                     showConfirmModal, handleImport, confirmData, confirmSubmit, viewDetails,
-                    showHistoryModal, currentHistory, viewHistory
+                    showHistoryModal, currentHistory, viewHistory, navigateToPage
                 }
             }
         }).mount('#app')

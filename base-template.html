@@ -589,8 +589,12 @@
                 };
 
                 const navigateTo = (pageId) => {
-                    currentPage.value = pageId;
-                    console.log('导航到页面:', pageId);
+                    if (pageId === 'cost-import') {
+                        window.location.href = 'index.html';
+                    } else {
+                        currentPage.value = pageId;
+                        console.log('导航到页面:', pageId);
+                    }
                 };
 
                 const resetFilters = () => {
