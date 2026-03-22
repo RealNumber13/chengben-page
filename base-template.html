@@ -11,9 +11,9 @@
         .sidebar-bg { background-color: #587ef5; }
         .sidebar-item { transition: all 0.2s ease; }
         .sidebar-item:hover { background-color: rgba(255, 255, 255, 0.1); }
-        .sidebar-item-active { background-color: #e0e7ff; color: #587ef5; border-right: 4px solid #1e40af; }
-        .submenu-item { transition: all 0.2s ease; }
-        .submenu-item:hover { background-color: rgba(255, 255, 255, 0.15); }
+        .sidebar-item-active { background-color: #f1f5f9; color: #587ef5; font-weight: 600; }
+        .submenu-item { transition: all 0.2s ease; opacity: 0.9; }
+        .submenu-item:hover { background-color: rgba(255, 255, 255, 0.15); opacity: 1; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -81,14 +81,24 @@
             <!-- Header 顶部导航栏 -->
             <header class="bg-white h-16 flex items-center justify-between px-8 shadow-sm border-b border-gray-100">
                 <div class="flex items-center gap-4">
-                    <h2 class="text-lg font-semibold text-gray-800">{{ pageTitle }}</h2>
+                    <h2 class="text-xl font-bold text-gray-800">
+                        {{ currentPage === 'cost-import' ? '成本导入' : '人员与考核模板绑定' }}
+                    </h2>
                     <div class="text-sm text-gray-400">
                         <i class="fa-solid fa-calendar-days mr-1"></i>
                         {{ currentDate }}
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <button v-if="currentPage === 'template-binding'" class="text-gray-700 hover:text-gray-900 px-4 py-2 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-file-import"></i>
+                        批量导入
+                    </button>
+                    <button v-if="currentPage === 'template-binding'" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-file-export"></i>
+                        导出报表
+                    </button>
                     <!-- 通知图标 -->
                     <button class="relative text-gray-500 hover:text-gray-700 transition-colors">
                         <i class="fa-solid fa-bell text-xl"></i>
@@ -143,155 +153,133 @@
                     <!-- 模板绑定页面 -->
                     <div v-if="currentPage === 'template-binding'">
                         <!-- 筛选区域 -->
-                        <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-                            <div class="grid grid-cols-4 gap-4 mb-4">
+                        <div class="bg-white rounded-lg shadow-sm p-6 mb-4">
+                            <div class="grid grid-cols-4 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">部门</label>
-                                    <select v-model="filters.department" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="">全部部门</option>
+                                    <label class="block text-sm text-gray-600 mb-2">姓名</label>
+                                    <input 
+                                        v-model="filters.name" 
+                                        type="text" 
+                                        placeholder="输入员工姓名"
+                                        class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-2">手机号</label>
+                                    <input 
+                                        v-model="filters.phone" 
+                                        type="text" 
+                                        placeholder="输入手机号"
+                                        class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-2">考核状态（全部状态）</label>
+                                    <select v-model="filters.assessmentStatus" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                                        <option value="">全部状态</option>
+                                        <option value="考核中">考核中</option>
+                                        <option value="已完成">已完成</option>
+                                        <option value="未开始">未开始</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-2">所属部门</label>
+                                    <select v-model="filters.department" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                                        <option value="">所属部门（全部部门）</option>
+                                        <option value="商务部">商务部</option>
+                                        <option value="研发中心">研发中心</option>
                                         <option value="技术部">技术部</option>
                                         <option value="产品部">产品部</option>
                                         <option value="运营部">运营部</option>
-                                        <option value="市场部">市场部</option>
-                                        <option value="人事部">人事部</option>
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">职位</label>
-                                    <select v-model="filters.position" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="">全部职位</option>
-                                        <option value="工程师">工程师</option>
-                                        <option value="产品经理">产品经理</option>
-                                        <option value="运营专员">运营专员</option>
-                                        <option value="设计师">设计师</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">绑定状态</label>
-                                    <select v-model="filters.bindStatus" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="">全部状态</option>
-                                        <option value="已绑定">已绑定</option>
-                                        <option value="未绑定">未绑定</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">搜索</label>
-                                    <div class="relative">
-                                        <input 
-                                            v-model="filters.keyword" 
-                                            type="text" 
-                                            placeholder="搜索员工姓名"
-                                            class="w-full border border-gray-300 rounded-lg px-3 py-2 pl-10 outline-none focus:ring-2 focus:ring-blue-500">
-                                        <i class="fa-solid fa-search absolute left-3 top-3 text-gray-400"></i>
-                                    </div>
-                                </div>
                             </div>
-                            <div class="flex justify-between items-center">
-                                <button @click="resetFilters" class="text-sm text-gray-600 hover:text-gray-800">
-                                    <i class="fa-solid fa-rotate-right mr-1"></i>重置筛选
-                                </button>
-                                <button @click="applyFilters" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all">
-                                    <i class="fa-solid fa-filter mr-2"></i>应用筛选
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- 操作栏 -->
-                        <div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex justify-between items-center">
-                            <div class="flex items-center gap-4">
-                                <label class="flex items-center gap-2">
-                                    <input 
-                                        type="checkbox" 
-                                        v-model="selectAll"
-                                        @change="toggleSelectAll"
-                                        class="w-4 h-4 text-blue-600 rounded">
-                                    <span class="text-sm text-gray-700">全选</span>
-                                </label>
-                                <span class="text-sm text-gray-500">已选择 {{ selectedEmployees.length }} 人</span>
-                            </div>
-                            <div class="flex gap-3">
-                                <button 
-                                    @click="showBatchBindModal = true"
-                                    :disabled="selectedEmployees.length === 0"
-                                    :class="selectedEmployees.length === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
-                                    class="text-white px-4 py-2 rounded-lg transition-all flex items-center gap-2">
-                                    <i class="fa-solid fa-link"></i>批量绑定
-                                </button>
-                                <button 
-                                    @click="exportData"
-                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all flex items-center gap-2">
-                                    <i class="fa-solid fa-file-export"></i>导出数据
+                            <div class="mt-4 flex justify-end">
+                                <button @click="applyFilters" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded text-sm transition-all">
+                                    查询
                                 </button>
                             </div>
                         </div>
 
                         <!-- 员工列表 -->
-                        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
                             <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="bg-gray-50 text-gray-600 text-sm border-b border-gray-200">
-                                        <th class="p-4 w-12">
-                                            <input 
-                                                type="checkbox" 
-                                                v-model="selectAll"
-                                                @change="toggleSelectAll"
-                                                class="w-4 h-4 text-blue-600 rounded">
-                                        </th>
-                                        <th class="p-4 font-semibold">员工姓名</th>
-                                        <th class="p-4 font-semibold">工号</th>
-                                        <th class="p-4 font-semibold">部门</th>
-                                        <th class="p-4 font-semibold">职位</th>
-                                        <th class="p-4 font-semibold">入职日期</th>
-                                        <th class="p-4 font-semibold">绑定模板</th>
-                                        <th class="p-4 font-semibold">绑定状态</th>
-                                        <th class="p-4 font-semibold text-center">操作</th>
+                                    <tr class="bg-gray-50 text-gray-600 text-sm border-b">
+                                        <th class="p-4 font-medium">员工姓名</th>
+                                        <th class="p-4 font-medium">入职时间</th>
+                                        <th class="p-4 font-medium">工号</th>
+                                        <th class="p-4 font-medium">手机号</th>
+                                        <th class="p-4 font-medium">所属部门</th>
+                                        <th class="p-4 font-medium">业务角色</th>
+                                        <th class="p-4 font-medium text-center">操作</th>
                                     </tr>
                                 </thead>
                                 <tbody class="text-gray-700">
-                                    <tr 
-                                        v-for="employee in filteredEmployees" 
-                                        :key="employee.id"
-                                        class="border-b border-gray-100 hover:bg-blue-50/30 transition-colors">
-                                        <td class="p-4">
-                                            <input 
-                                                type="checkbox" 
-                                                :value="employee.id"
-                                                v-model="selectedEmployees"
-                                                class="w-4 h-4 text-blue-600 rounded">
-                                        </td>
-                                        <td class="p-4">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-medium">
-                                                    {{ employee.name.charAt(0) }}
+                                    <template v-for="employee in filteredEmployees" :key="employee.id">
+                                        <tr class="border-b hover:bg-gray-50 transition-colors">
+                                            <td class="p-4">
+                                                <div class="flex items-center gap-2">
+                                                    <button @click="toggleEmployeeDetail(employee.id)" class="text-gray-400 hover:text-gray-600">
+                                                        <i :class="employee.expanded ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right'" class="text-xs"></i>
+                                                    </button>
+                                                    <span class="text-blue-600 font-medium">{{ employee.name }}</span>
                                                 </div>
-                                                <span class="font-medium">{{ employee.name }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="p-4 text-sm">{{ employee.employeeId }}</td>
-                                        <td class="p-4 text-sm">{{ employee.department }}</td>
-                                        <td class="p-4 text-sm">{{ employee.position }}</td>
-                                        <td class="p-4 text-sm">{{ employee.joinDate }}</td>
-                                        <td class="p-4">
-                                            <span v-if="employee.template" class="text-sm text-blue-600">
-                                                {{ employee.template }}
-                                            </span>
-                                            <span v-else class="text-sm text-gray-400">未绑定</span>
-                                        </td>
-                                        <td class="p-4">
-                                            <span 
-                                                :class="employee.template ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
-                                                class="px-3 py-1 rounded-full text-xs font-medium">
-                                                {{ employee.template ? '已绑定' : '未绑定' }}
-                                            </span>
-                                        </td>
-                                        <td class="p-4 text-center">
-                                            <button 
-                                                @click="openBindModal(employee)"
-                                                class="text-sm px-3 py-1 rounded border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors">
-                                                {{ employee.template ? '修改绑定' : '绑定模板' }}
-                                            </button>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td class="p-4 text-sm">{{ employee.joinDate }}</td>
+                                            <td class="p-4 text-sm">{{ employee.employeeId }}</td>
+                                            <td class="p-4 text-sm">{{ employee.phone }}</td>
+                                            <td class="p-4 text-sm">{{ employee.department }}</td>
+                                            <td class="p-4 text-sm">{{ employee.role }}</td>
+                                            <td class="p-4 text-center">
+                                                <button 
+                                                    @click="openBindModal(employee)"
+                                                    class="text-sm px-4 py-1 rounded border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors">
+                                                    绑定模板
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="employee.expanded && employee.templates && employee.templates.length > 0" class="bg-blue-50/30">
+                                            <td colspan="7" class="p-0">
+                                                <div class="px-16 py-4">
+                                                    <div class="flex items-center gap-2 mb-3">
+                                                        <i class="fa-solid fa-file-lines text-blue-600"></i>
+                                                        <span class="text-sm font-medium text-gray-700">已绑定模板列表</span>
+                                                    </div>
+                                                    <table class="w-full text-sm">
+                                                        <thead>
+                                                            <tr class="text-gray-500 text-xs">
+                                                                <th class="p-2 text-left font-medium">模板名称</th>
+                                                                <th class="p-2 text-left font-medium">考核类型</th>
+                                                                <th class="p-2 text-left font-medium">绑定对象</th>
+                                                                <th class="p-2 text-left font-medium">绑定时期</th>
+                                                                <th class="p-2 text-left font-medium">考核状态</th>
+                                                                <th class="p-2 text-center font-medium">操作</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="(tpl, idx) in employee.templates" :key="idx" class="border-t border-gray-200">
+                                                                <td class="p-2">
+                                                                    <i class="fa-regular fa-file-lines text-gray-400 mr-2"></i>
+                                                                    {{ tpl.name }}
+                                                                </td>
+                                                                <td class="p-2">{{ tpl.type }}</td>
+                                                                <td class="p-2">{{ tpl.target }}</td>
+                                                                <td class="p-2">{{ tpl.period }}</td>
+                                                                <td class="p-2">
+                                                                    <span :class="tpl.status === '考核中' ? 'text-green-600' : 'text-gray-500'">
+                                                                        {{ tpl.status }}
+                                                                    </span>
+                                                                </td>
+                                                                <td class="p-2 text-center">
+                                                                    <button class="text-red-600 hover:text-red-700 text-xs mr-3">解除绑定</button>
+                                                                    <button class="text-blue-600 hover:text-blue-700 text-xs">换绑目标</button>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
                                 </tbody>
                             </table>
                             
@@ -299,20 +287,6 @@
                             <div v-if="filteredEmployees.length === 0" class="text-center py-12 text-gray-500">
                                 <i class="fa-solid fa-inbox text-4xl mb-3 text-gray-300"></i>
                                 <p>暂无符合条件的员工数据</p>
-                            </div>
-                        </div>
-
-                        <!-- 分页 -->
-                        <div class="mt-6 flex justify-between items-center">
-                            <div class="text-sm text-gray-600">
-                                共 {{ filteredEmployees.length }} 条记录
-                            </div>
-                            <div class="flex gap-2">
-                                <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">上一页</button>
-                                <button class="px-3 py-1 bg-blue-600 text-white rounded">1</button>
-                                <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">2</button>
-                                <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">3</button>
-                                <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">下一页</button>
                             </div>
                         </div>
 
@@ -371,53 +345,6 @@
                             </div>
                         </div>
 
-                        <!-- 批量绑定弹窗 -->
-                        <div v-if="showBatchBindModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                            <div class="bg-white rounded-xl shadow-2xl w-[500px] overflow-hidden">
-                                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                                    <h3 class="text-xl font-bold text-gray-800">批量绑定模板</h3>
-                                    <button @click="showBatchBindModal = false" class="text-gray-400 hover:text-gray-600">
-                                        <i class="fa-solid fa-xmark text-xl"></i>
-                                    </button>
-                                </div>
-                                <div class="p-6">
-                                    <div class="mb-4">
-                                        <div class="text-sm text-gray-600 mb-2">已选择 {{ selectedEmployees.length }} 名员工</div>
-                                        <div class="bg-gray-50 p-4 rounded-lg max-h-32 overflow-y-auto">
-                                            <div class="flex flex-wrap gap-2">
-                                                <span 
-                                                    v-for="empId in selectedEmployees" 
-                                                    :key="empId"
-                                                    class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
-                                                    {{ employees.find(e => e.id === empId)?.name }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">选择绩效模板</label>
-                                        <select v-model="batchSelectedTemplate" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
-                                            <option value="">请选择模板</option>
-                                            <option value="技术岗位绩效模板">技术岗位绩效模板</option>
-                                            <option value="产品岗位绩效模板">产品岗位绩效模板</option>
-                                            <option value="运营岗位绩效模板">运营岗位绩效模板</option>
-                                            <option value="管理岗位绩效模板">管理岗位绩效模板</option>
-                                            <option value="销售岗位绩效模板">销售岗位绩效模板</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="p-6 bg-gray-50 flex justify-end gap-4">
-                                    <button @click="showBatchBindModal = false" class="px-6 py-2 text-gray-600 hover:text-gray-800">取消</button>
-                                    <button 
-                                        @click="confirmBatchBind"
-                                        :disabled="!batchSelectedTemplate"
-                                        :class="!batchSelectedTemplate ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
-                                        class="px-8 py-2 text-white rounded-lg shadow transition-all">
-                                        确认批量绑定
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- 绩效考核页面占位 -->
@@ -517,56 +444,64 @@
                 ]);
 
                 const employees = ref([
-                    { id: 1, name: '张三', employeeId: 'EMP001', department: '技术部', position: '工程师', joinDate: '2023-01-15', template: '技术岗位绩效模板' },
-                    { id: 2, name: '李四', employeeId: 'EMP002', department: '产品部', position: '产品经理', joinDate: '2023-02-20', template: '产品岗位绩效模板' },
-                    { id: 3, name: '王五', employeeId: 'EMP003', department: '技术部', position: '工程师', joinDate: '2023-03-10', template: '' },
-                    { id: 4, name: '赵六', employeeId: 'EMP004', department: '运营部', position: '运营专员', joinDate: '2023-04-05', template: '运营岗位绩效模板' },
-                    { id: 5, name: '钱七', employeeId: 'EMP005', department: '市场部', position: '设计师', joinDate: '2023-05-12', template: '' },
-                    { id: 6, name: '孙八', employeeId: 'EMP006', department: '技术部', position: '工程师', joinDate: '2023-06-18', template: '技术岗位绩效模板' },
-                    { id: 7, name: '周九', employeeId: 'EMP007', department: '产品部', position: '产品经理', joinDate: '2023-07-22', template: '' },
-                    { id: 8, name: '吴十', employeeId: 'EMP008', department: '人事部', position: '人事专员', joinDate: '2023-08-30', template: '管理岗位绩效模板' },
+                    { 
+                        id: 1, 
+                        name: '张三', 
+                        employeeId: '001824', 
+                        department: '商务部', 
+                        role: '商务专员', 
+                        joinDate: '2025.12.25', 
+                        phone: '138****8888',
+                        expanded: false,
+                        templates: [
+                            { name: '2025年度考核专属模板', type: '年', target: '个人', period: '2025-05-01至2025-12-31', status: '考核中' }
+                        ]
+                    },
+                    { 
+                        id: 2, 
+                        name: '李四', 
+                        employeeId: '001008', 
+                        department: '研发中心', 
+                        role: '高级工程师', 
+                        joinDate: '2025.12.14', 
+                        phone: '136****6666',
+                        expanded: false,
+                        templates: []
+                    },
+                    { 
+                        id: 3, 
+                        name: '王五', 
+                        employeeId: '001152', 
+                        department: '商务部', 
+                        role: '部门主管', 
+                        joinDate: '2025.12.5', 
+                        phone: '188****1234',
+                        expanded: false,
+                        templates: []
+                    },
                 ]);
 
                 const filters = ref({
-                    department: '',
-                    position: '',
-                    bindStatus: '',
-                    keyword: ''
+                    name: '',
+                    phone: '',
+                    assessmentStatus: '',
+                    department: ''
                 });
 
-                const selectedEmployees = ref([]);
-                const selectAll = ref(false);
                 const showBindModal = ref(false);
-                const showBatchBindModal = ref(false);
                 const currentEmployee = ref(null);
                 const selectedTemplate = ref('');
-                const batchSelectedTemplate = ref('');
 
                 const filteredEmployees = computed(() => {
                     return employees.value.filter(emp => {
-                        if (filters.value.department && emp.department !== filters.value.department) return false;
-                        if (filters.value.position && emp.position !== filters.value.position) return false;
-                        if (filters.value.bindStatus) {
-                            const isBound = emp.template ? '已绑定' : '未绑定';
-                            if (isBound !== filters.value.bindStatus) return false;
-                        }
-                        if (filters.value.keyword && !emp.name.includes(filters.value.keyword)) return false;
-                        return true;
+                        const matchName = !filters.value.name || emp.name.includes(filters.value.name);
+                        const matchPhone = !filters.value.phone || emp.phone.includes(filters.value.phone);
+                        const matchDept = !filters.value.department || emp.department === filters.value.department;
+                        return matchName && matchPhone && matchDept;
                     });
                 });
 
-                const pageTitle = computed(() => {
-                    const pageMap = {
-                        'home': '首页',
-                        'indicator-library': '指标库管理',
-                        'template-library': '模板库管理',
-                        'template-binding': '模板绑定',
-                        'performance-assessment': '绩效考核',
-                        'my-performance': '我的绩效',
-                        'cost-import': '成本数据同步与确认'
-                    };
-                    return pageMap[currentPage.value] || '绩效管理系统';
-                });
+
 
                 const breadcrumb = computed(() => {
                     const breadcrumbMap = {
@@ -597,25 +532,15 @@
                     }
                 };
 
-                const resetFilters = () => {
-                    filters.value = {
-                        department: '',
-                        position: '',
-                        bindStatus: '',
-                        keyword: ''
-                    };
+                const toggleEmployeeDetail = (employeeId) => {
+                    const employee = employees.value.find(emp => emp.id === employeeId);
+                    if (employee) {
+                        employee.expanded = !employee.expanded;
+                    }
                 };
 
                 const applyFilters = () => {
                     console.log('应用筛选条件:', filters.value);
-                };
-
-                const toggleSelectAll = () => {
-                    if (selectAll.value) {
-                        selectedEmployees.value = filteredEmployees.value.map(emp => emp.id);
-                    } else {
-                        selectedEmployees.value = [];
-                    }
                 };
 
                 const openBindModal = (employee) => {
@@ -637,52 +562,26 @@
                     }
                 };
 
-                const confirmBatchBind = () => {
-                    if (batchSelectedTemplate.value && selectedEmployees.value.length > 0) {
-                        selectedEmployees.value.forEach(empId => {
-                            const emp = employees.value.find(e => e.id === empId);
-                            if (emp) {
-                                emp.template = batchSelectedTemplate.value;
-                            }
-                        });
-                        alert(`成功为 ${selectedEmployees.value.length} 名员工绑定模板：${batchSelectedTemplate.value}`);
-                        showBatchBindModal.value = false;
-                        batchSelectedTemplate.value = '';
-                        selectedEmployees.value = [];
-                        selectAll.value = false;
-                    }
-                };
 
-                const exportData = () => {
-                    alert('导出功能开发中...');
-                };
 
                 return {
                     currentUser,
                     currentPage,
                     currentDate,
                     menus,
-                    pageTitle,
                     breadcrumb,
                     toggleMenu,
                     navigateTo,
                     employees,
                     filters,
                     filteredEmployees,
-                    selectedEmployees,
-                    selectAll,
                     showBindModal,
-                    showBatchBindModal,
                     currentEmployee,
                     selectedTemplate,
-                    batchSelectedTemplate,
-                    resetFilters,
                     applyFilters,
-                    toggleSelectAll,
+                    toggleEmployeeDetail,
                     openBindModal,
-                    confirmBind,
-                    confirmBatchBind,
-                    exportData
+                    confirmBind
                 };
             }
         }).mount('#app');

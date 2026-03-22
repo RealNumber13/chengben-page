@@ -9,8 +9,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .sidebar-bg { background-color: #587ef5; }
-        .sidebar-item-active { background-color: #e0e7ff; color: #587ef5; border-right: 4px solid #1e40af; }
+        .sidebar-item-active { background-color: #f1f5f9; color: #587ef5; font-weight: 600; }
         .table-header { background-color: #f8fafc; }
+        .sidebar-item { transition: all 0.2s ease; }
+        .sidebar-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .submenu-item { transition: all 0.2s ease; opacity: 0.9; }
+        .submenu-item:hover { background-color: rgba(255, 255, 255, 0.15); opacity: 1; }
     </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -24,18 +28,18 @@
             </div>
             <nav class="flex-1 mt-4 overflow-y-auto">
                 <div v-for="menu in menus" :key="menu.name">
-                    <div class="px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-blue-500/50" @click="menu.open = !menu.open">
+                    <div class="px-4 py-3 flex justify-between items-center cursor-pointer sidebar-item" @click="menu.open = !menu.open">
                         <div class="flex items-center gap-3">
-                            <i :class="menu.icon"></i>
-                            <span>{{ menu.name }}</span>
+                            <i :class="menu.icon" class="w-5 text-center"></i>
+                            <span class="font-medium">{{ menu.name }}</span>
                         </div>
-                        <i :class="menu.open ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="text-xs"></i>
+                        <i :class="menu.open ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="text-xs transition-transform"></i>
                     </div>
                     <div v-if="menu.open" class="bg-white/10">
                         <div v-for="sub in menu.subMenus" :key="sub" 
-                             :class="['pl-12 py-2 cursor-pointer hover:text-blue-100 transition-colors', sub === '成本导入' ? 'sidebar-item-active' : '']"
+                             :class="['pl-12 py-2.5 cursor-pointer submenu-item transition-all', sub === '成本导入' ? 'sidebar-item-active' : '']"
                              @click="navigateToPage(sub)">
-                            {{ sub }}
+                            <span class="text-sm">{{ sub }}</span>
                         </div>
                     </div>
                 </div>
@@ -266,7 +270,7 @@
 
                 const menus = ref([
                     { name: '办公', icon: 'fa-solid fa-house', open: false, subMenus: ['日常办公', '考勤查看'] },
-                    { name: '客户', icon: 'fa-solid fa-envelope', open: false, subMenus: ['公海池', '我的客户'] },
+                    { name: '客户', icon: 'fa-solid fa-users', open: false, subMenus: ['公海池', '我的客户'] },
                     { name: '项目', icon: 'fa-solid fa-briefcase', open: false, subMenus: ['项目立项', '资源分配'] },
                     { name: '财务', icon: 'fa-solid fa-sack-dollar', open: false, subMenus: ['报销审批', '发票管理'] },
                     { name: '人事', icon: 'fa-solid fa-user-group', open: true, subMenus: ['指标库', '模板库', '模板绑定', '绩效考核', '我的绩效', '成本导入'] }
