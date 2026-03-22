@@ -33,9 +33,9 @@
                             <i :class="menu.icon" class="w-5 text-center"></i>
                             <span class="font-medium">{{ menu.name }}</span>
                         </div>
-                        <i :class="menu.open ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="text-xs transition-transform"></i>
+                        <i v-if="menu.subMenus && menu.subMenus.length > 0" :class="menu.open ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="text-xs transition-transform"></i>
                     </div>
-                    <div v-if="menu.open" class="bg-white/10">
+                    <div v-if="menu.open && menu.subMenus && menu.subMenus.length > 0">
                         <div v-for="sub in menu.subMenus" :key="sub" 
                              :class="['pl-12 py-2.5 cursor-pointer submenu-item transition-all', sub === '成本导入' ? 'sidebar-item-active' : '']"
                              @click="navigateToPage(sub)">
@@ -458,6 +458,10 @@
                         window.location.href = 'indicator-library.html';
                     } else if (pageName === '模板绑定') {
                         window.location.href = 'base-template.html';
+                    } else if (pageName === '模板库') {
+                        window.location.href = 'template-library.html';
+                    } else if (pageName === '绩效考核') {
+                        window.location.href = 'performance-exam.html';
                     }
                 };
 

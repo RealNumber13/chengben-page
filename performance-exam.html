@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绩效考核</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-bg { background-color: #587ef5; }
+        .sidebar-item-active { background-color: #f1f5f9; color: #587ef5; font-weight: 600; }
+        .sidebar-item { transition: all 0.2s ease; }
+        .sidebar-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .submenu-item { transition: all 0.2s ease; opacity: 0.9; }
+        .submenu-item:hover { background-color: rgba(255, 255, 255, 0.15); opacity: 1; }
+        .expandable-row { background-color: #f9fafb; }
+        .detail-table { font-size: 0.875rem; }
+        .detail-table th { background-color: #f3f4f6; font-weight: 500; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div id="app" class="flex h-screen">
+        <div class="sidebar-bg w-64 text-white flex flex-col shrink-0">
+            <div class="p-4 flex flex-col items-center border-b border-blue-400/30">
+                <div class="bg-white p-2 rounded-lg mb-2">
+                    <span class="text-blue-600 font-bold text-xl">XIAOTI</span>
+                </div>
+                <span class="text-xs opacity-80 uppercase tracking-widest">小题旅行</span>
+            </div>
+            <nav class="flex-1 mt-4 overflow-y-auto">
+                <div v-for="menu in menus" :key="menu.id">
+                    <div class="px-4 py-3 flex justify-between items-center cursor-pointer sidebar-item" @click="toggleMenu(menu.id)">
+                        <div class="flex items-center gap-3">
+                            <i :class="menu.icon" class="w-5 text-center"></i>
+                            <span class="font-medium">{{ menu.name }}</span>
+                        </div>
+                        <i v-if="menu.subMenus.length > 0" :class="menu.open ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="text-xs transition-transform"></i>
+                    </div>
+                    <div v-if="menu.open && menu.subMenus.length > 0" class="bg-white/10">
+                        <div v-for="sub in menu.subMenus" :key="sub.id" 
+                             :class="['pl-12 py-2.5 cursor-pointer submenu-item transition-all', currentPage === sub.id ? 'sidebar-item-active' : '']"
+                             @click="navigateTo(sub.id)">
+                            <span class="text-sm">{{ sub.name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white px-8 py-6 border-b border-gray-200">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 mb-1">绩效考核</h1>
+                    <p class="text-sm text-gray-500">该页面用于填写人员的绩效数据，输出绩效后下发数据</p>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-auto p-8">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+                    <div class="p-6 border-b border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <button class="px-6 py-2.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                所属部门
+                            </button>
+                            <button class="px-6 py-2.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                员工姓名
+                            </button>
+                            <button class="px-6 py-2.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                绩效名称
+                            </button>
+                            <button class="px-6 py-2.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                考核时间
+                            </button>
+                            <button class="px-6 py-2.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                                考核周期
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-600 border-b">
+                                    <th class="p-3 font-medium">员工姓名</th>
+                                    <th class="p-3 font-medium">入职时间</th>
+                                    <th class="p-3 font-medium">工号</th>
+                                    <th class="p-3 font-medium">所属部门</th>
+                                    <th class="p-3 font-medium">业务角色</th>
+                                    <th class="p-3 font-medium">绩效名称</th>
+                                    <th class="p-3 font-medium">考核周期</th>
+                                    <th class="p-3 font-medium">统计维度</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-700">
+                                <template v-for="(employee, index) in employees" :key="employee.id">
+                                    <tr class="border-b hover:bg-gray-50 transition-colors cursor-pointer" @click="toggleExpand(employee.id)">
+                                        <td class="p-3">{{ employee.name }}</td>
+                                        <td class="p-3">{{ employee.joinDate }}</td>
+                                        <td class="p-3">{{ employee.employeeId }}</td>
+                                        <td class="p-3">{{ employee.department }}</td>
+                                        <td class="p-3">{{ employee.role }}</td>
+                                        <td class="p-3">{{ employee.performanceName }}</td>
+                                        <td class="p-3">{{ employee.period }}</td>
+                                        <td class="p-3">{{ employee.dimension }}</td>
+                                    </tr>
+                                    <tr v-if="expandedRows.includes(employee.id)" class="expandable-row">
+                                        <td colspan="8" class="p-6">
+                                            <div class="bg-white rounded-lg border border-gray-200">
+                                                <table class="w-full detail-table">
+                                                    <thead>
+                                                        <tr class="border-b">
+                                                            <th class="p-2 text-left">考核时间</th>
+                                                            <th class="p-2 text-left">指标</th>
+                                                            <th class="p-2 text-left">目标</th>
+                                                            <th class="p-2 text-left">实际完成</th>
+                                                            <th class="p-2 text-left">完成率</th>
+                                                            <th class="p-2 text-left">指标</th>
+                                                            <th class="p-2 text-left">目标</th>
+                                                            <th class="p-2 text-left">实际完成</th>
+                                                            <th class="p-2 text-left">完成率</th>
+                                                            <th class="p-2 text-left">完成情况</th>
+                                                            <th class="p-2 text-left">考核状态</th>
+                                                            <th class="p-2 text-left">操作</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr v-for="detail in employee.details" :key="detail.quarter" class="border-b hover:bg-gray-50">
+                                                            <td class="p-2">{{ detail.quarter }}</td>
+                                                            <td class="p-2">{{ detail.indicator1 }}</td>
+                                                            <td class="p-2">{{ detail.target1 }}</td>
+                                                            <td class="p-2">{{ detail.actual1 }}</td>
+                                                            <td class="p-2">{{ detail.rate1 }}</td>
+                                                            <td class="p-2">{{ detail.indicator2 }}</td>
+                                                            <td class="p-2">{{ detail.target2 }}</td>
+                                                            <td class="p-2">{{ detail.actual2 }}</td>
+                                                            <td class="p-2">{{ detail.rate2 }}</td>
+                                                            <td class="p-2">{{ detail.completion }}</td>
+                                                            <td class="p-2">
+                                                                <span :class="detail.status === '已确认' ? 'text-gray-700' : detail.status === '考核中' ? 'text-blue-600' : 'text-red-600'">
+                                                                    {{ detail.status }}
+                                                                </span>
+                                                            </td>
+                                                            <td class="p-2">
+                                                                <button class="text-blue-600 hover:text-blue-700 mr-2">填写</button>
+                                                                <button :class="detail.status === '确认结束' ? 'text-red-600 hover:text-red-700' : 'text-blue-600 hover:text-blue-700'">
+                                                                    {{ detail.status === '确认结束' ? '确认结束' : '确认结束' }}
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                        <tr class="bg-gray-50">
+                                                            <td class="p-2 font-medium">总</td>
+                                                            <td class="p-2">{{ employee.total.indicator1 }}</td>
+                                                            <td class="p-2">{{ employee.total.target1 }}</td>
+                                                            <td class="p-2">{{ employee.total.actual1 }}</td>
+                                                            <td class="p-2">{{ employee.total.rate1 }}</td>
+                                                            <td class="p-2">{{ employee.total.indicator2 }}</td>
+                                                            <td class="p-2">{{ employee.total.target2 }}</td>
+                                                            <td class="p-2">{{ employee.total.actual2 }}</td>
+                                                            <td class="p-2">{{ employee.total.rate2 }}</td>
+                                                            <td class="p-2">{{ employee.total.completion }}</td>
+                                                            <td class="p-2"></td>
+                                                            <td class="p-2"></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        createApp({
+            setup() {
+                const currentPage = ref('performance-exam');
+                const expandedRows = ref([]);
+
+                const menus = ref([
+                    {
+                        id: 'office',
+                        name: '办公',
+                        icon: 'fa-solid fa-briefcase',
+                        open: false,
+                        subMenus: []
+                    },
+                    {
+                        id: 'customer',
+                        name: '客户',
+                        icon: 'fa-solid fa-users',
+                        open: false,
+                        subMenus: []
+                    },
+                    {
+                        id: 'project',
+                        name: '项目',
+                        icon: 'fa-solid fa-folder-open',
+                        open: false,
+                        subMenus: []
+                    },
+                    {
+                        id: 'finance',
+                        name: '财务',
+                        icon: 'fa-solid fa-coins',
+                        open: false,
+                        subMenus: []
+                    },
+                    {
+                        id: 'hr',
+                        name: '人事',
+                        icon: 'fa-solid fa-user-tie',
+                        open: true,
+                        subMenus: [
+                            { id: 'indicator-library', name: '指标库' },
+                            { id: 'template-library', name: '模板库' },
+                            { id: 'template-binding', name: '模板绑定' },
+                            { id: 'performance-exam', name: '绩效考核' },
+                            { id: 'my-performance', name: '我的绩效' },
+                            { id: 'cost-import', name: '成本导入' }
+                        ]
+                    },
+                    {
+                        id: 'settings',
+                        name: '设置',
+                        icon: 'fa-solid fa-gear',
+                        open: false,
+                        subMenus: []
+                    },
+                    {
+                        id: 'assets',
+                        name: '资产',
+                        icon: 'fa-solid fa-building',
+                        open: false,
+                        subMenus: []
+                    }
+                ]);
+
+                const employees = ref([
+                    {
+                        id: 1,
+                        name: '张三',
+                        joinDate: '2026.1.10',
+                        employeeId: '00123',
+                        department: '商务一部',
+                        role: '商务',
+                        performanceName: 'xxx',
+                        period: '年度',
+                        dimension: '个人',
+                        details: [
+                            { quarter: 'Q1', indicator1: '毛利', target1: '1000', actual1: '800', rate1: '80%', indicator2: '经营数', target2: '10', actual2: '10', rate2: '100%', completion: '100%', status: '已确认' },
+                            { quarter: 'Q2', indicator1: '毛利', target1: '1000', actual1: '800', rate1: '80%', indicator2: '经营数', target2: '10', actual2: '10', rate2: '100%', completion: '100%', status: '已确认' },
+                            { quarter: 'Q3', indicator1: '毛利', target1: '1000', actual1: '800', rate1: '80%', indicator2: '经营数', target2: '10', actual2: '10', rate2: '100%', completion: '100%', status: '考核结束后确认' },
+                            { quarter: 'Q4', indicator1: '毛利', target1: '1000', actual1: '800', rate1: '80%', indicator2: '经营数', target2: '10', actual2: '10', rate2: '100%', completion: '100%', status: '考核中' }
+                        ],
+                        total: { indicator1: '毛利', target1: '4000', actual1: '800', rate1: '80%', indicator2: '经营数', target2: '10', actual2: '10', rate2: '100%', completion: '100%' }
+                    },
+                    {
+                        id: 2,
+                        name: '李四',
+                        joinDate: '2026.9.21',
+                        employeeId: '02123',
+                        department: '商务一部',
+                        role: '商务',
+                        performanceName: 'xxx',
+                        period: '月度',
+                        dimension: '部门',
+                        details: [
+                            { quarter: 'Q3', indicator1: '毛利', target1: '1000', actual1: '800', rate1: '80%', indicator2: '经营数', target2: '10', actual2: '10', rate2: '100%', completion: '100%', status: '考核结束后确认' },
+                            { quarter: 'Q4', indicator1: '毛利', target1: '1000', actual1: '800', rate1: '80%', indicator2: '经营数', target2: '10', actual2: '10', rate2: '100%', completion: '100%', status: '考核中' }
+                        ],
+                        total: { indicator1: '毛利', target1: '4000', actual1: '800', rate1: '80%', indicator2: '经营数', target2: '10', actual2: '10', rate2: '100%', completion: '100%' }
+                    }
+                ]);
+
+                const toggleMenu = (menuId) => {
+                    const menu = menus.value.find(m => m.id === menuId);
+                    if (menu) {
+                        menu.open = !menu.open;
+                    }
+                };
+
+                const toggleExpand = (employeeId) => {
+                    const index = expandedRows.value.indexOf(employeeId);
+                    if (index > -1) {
+                        expandedRows.value.splice(index, 1);
+                    } else {
+                        expandedRows.value.push(employeeId);
+                    }
+                };
+
+                const navigateTo = (pageId) => {
+                    if (pageId === 'performance-exam') {
+                        return;
+                    } else if (pageId === 'indicator-library') {
+                        window.location.href = 'indicator-library.html';
+                    } else if (pageId === 'template-library') {
+                        window.location.href = 'template-library.html';
+                    } else if (pageId === 'template-binding') {
+                        window.location.href = 'base-template.html';
+                    } else if (pageId === 'cost-import') {
+                        window.location.href = 'index.html';
+                    } else {
+                        currentPage.value = pageId;
+                    }
+                };
+
+                return {
+                    currentPage,
+                    menus,
+                    employees,
+                    expandedRows,
+                    toggleMenu,
+                    toggleExpand,
+                    navigateTo
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -250,7 +250,7 @@
                             { id: 'template-library', name: '模板库' },
                             { id: 'template-binding', name: '模板绑定' },
                             { id: 'performance-exam', name: '绩效考核' },
-                            { id: 'performance-stats', name: '绩效统计' },
+                            { id: 'my-performance', name: '我的绩效' },
                             { id: 'cost-import', name: '成本导入' }
                         ]
                     },
@@ -333,6 +333,10 @@
                         window.location.href = 'base-template.html';
                     } else if (pageId === 'cost-import') {
                         window.location.href = 'index.html';
+                    } else if (pageId === 'template-library') {
+                        window.location.href = 'template-library.html';
+                    } else if (pageId === 'performance-exam') {
+                        window.location.href = 'performance-exam.html';
                     } else {
                         currentPage.value = pageId;
                     }
