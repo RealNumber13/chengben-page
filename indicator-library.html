@@ -123,7 +123,7 @@
                 <div class="bg-white rounded-lg shadow-sm">
                     <!-- 操作栏 -->
                     <div class="px-6 py-4 border-b border-gray-200 flex justify-end">
-                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm flex items-center gap-2">
+                        <button @click="showAddModal = true" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded text-sm flex items-center gap-2">
                             <i class="fa-solid fa-plus"></i>
                             新增
                         </button>
@@ -198,6 +198,125 @@
                     </div>
                 </div>
             </main>
+        </div>
+
+        <!-- 新增指标弹窗 -->
+        <div v-if="showAddModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-xl w-[800px] max-h-[90vh] overflow-y-auto">
+                <!-- 弹窗标题 -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800">编辑指标：毛利</h3>
+                    <button @click="showAddModal = false" class="text-gray-400 hover:text-gray-600">
+                        <i class="fa-solid fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- 弹窗内容 -->
+                <div class="px-6 py-4">
+                    <!-- 提示信息 -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+                        <i class="fa-solid fa-circle-info text-blue-500 mt-0.5"></i>
+                        <span class="text-sm text-blue-700">正在编辑系统可复用型数据类指标，此类指标支持自由日期计算并复用定义</span>
+                    </div>
+
+                    <!-- 表单 -->
+                    <div class="space-y-5">
+                        <!-- 数据来源 -->
+                        <div class="flex items-start gap-4">
+                            <label class="w-24 text-sm text-gray-700 pt-2 text-right">数据来源</label>
+                            <div class="flex-1">
+                                <select v-model="newIndicator.dataSource" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                                    <option value="">请选择数据来源</option>
+                                    <option value="高级查询">高级查询</option>
+                                    <option value="业务引数据">业务引数据</option>
+                                    <option value="手动录入">手动录入</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 指标名称 -->
+                        <div class="flex items-start gap-4">
+                            <label class="w-24 text-sm text-gray-700 pt-2 text-right">
+                                <span class="text-red-500">*</span> 指标名称
+                            </label>
+                            <div class="flex-1">
+                                <input v-model="newIndicator.name" type="text" placeholder="毛利" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- 是否手动录入 -->
+                        <div class="flex items-start gap-4">
+                            <label class="w-24 text-sm text-gray-700 pt-2 text-right">是否手动录入</label>
+                            <div class="flex-1 flex items-center gap-6 pt-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input v-model="newIndicator.manualInput" type="radio" :value="true" class="w-4 h-4 text-blue-600">
+                                    <span class="text-sm text-gray-700">启用</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input v-model="newIndicator.manualInput" type="radio" :value="false" class="w-4 h-4 text-blue-600">
+                                    <span class="text-sm text-gray-700">停用</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 单位 -->
+                        <div class="flex items-start gap-4">
+                            <label class="w-24 text-sm text-gray-700 pt-2 text-right">单位</label>
+                            <div class="flex-1 flex items-center gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input v-model="newIndicator.unit" type="radio" value="元" class="w-4 h-4 text-blue-600">
+                                    <span class="text-sm text-gray-700">元</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input v-model="newIndicator.unit" type="radio" value="百分比" class="w-4 h-4 text-blue-600">
+                                    <span class="text-sm text-gray-700">百分比</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input v-model="newIndicator.unit" type="radio" value="完成率" class="w-4 h-4 text-blue-600">
+                                    <span class="text-sm text-gray-700">完成率</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 指标属性 -->
+                        <div class="flex items-start gap-4">
+                            <label class="w-24 text-sm text-gray-700 pt-2 text-right">指标属性</label>
+                            <div class="flex-1">
+                                <input v-model="newIndicator.attribute" type="text" placeholder="目标" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- 指标计算公式 -->
+                        <div class="flex items-start gap-4">
+                            <label class="w-24 text-sm text-gray-700 pt-2 text-right">指标计算公式</label>
+                            <div class="flex-1">
+                                <div class="border border-gray-300 rounded p-3 bg-gray-50 text-sm text-gray-600 mb-2">
+                                    请输入指标的计算规则
+                                </div>
+                                <p class="text-xs text-gray-500">请添加指标的计算以算规则</p>
+                            </div>
+                        </div>
+
+                        <!-- 备注 -->
+                        <div class="flex items-start gap-4">
+                            <label class="w-24 text-sm text-gray-700 pt-2 text-right">备注</label>
+                            <div class="flex-1">
+                                <textarea v-model="newIndicator.note" rows="4" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500 resize-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 弹窗底部按钮 -->
+                <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                    <button @click="showAddModal = false" class="px-6 py-2 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">
+                        取消
+                    </button>
+                    <button @click="saveIndicator" class="px-6 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                        确认并提交
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -275,6 +394,17 @@
                 const filterStatus = ref('');
                 const currentPageNum = ref(1);
 
+                const showAddModal = ref(false);
+                const newIndicator = ref({
+                    dataSource: '',
+                    name: '',
+                    manualInput: true,
+                    unit: '元',
+                    attribute: '',
+                    formula: '',
+                    note: ''
+                });
+
                 const indicators = ref([
                     {
                         id: 1,
@@ -342,6 +472,11 @@
                     }
                 };
 
+                const saveIndicator = () => {
+                    console.log('保存指标:', newIndicator.value);
+                    showAddModal.value = false;
+                };
+
                 return {
                     currentPage,
                     currentDate,
@@ -355,7 +490,10 @@
                     totalCount,
                     totalPages,
                     toggleMenu,
-                    navigateTo
+                    navigateTo,
+                    showAddModal,
+                    newIndicator,
+                    saveIndicator
                 };
             }
         }).mount('#app');
