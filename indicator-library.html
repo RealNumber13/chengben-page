@@ -327,11 +327,14 @@
                 };
 
                 const navigateTo = (pageId) => {
-                    currentPage.value = pageId;
-                    if (pageId === 'template-binding') {
+                    if (pageId === 'indicator-library') {
+                        return;
+                    } else if (pageId === 'template-binding') {
                         window.location.href = 'base-template.html';
                     } else if (pageId === 'cost-import') {
                         window.location.href = 'index.html';
+                    } else {
+                        currentPage.value = pageId;
                     }
                 };
 

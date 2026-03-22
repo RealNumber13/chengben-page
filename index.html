@@ -454,8 +454,11 @@
                 const navigateToPage = (pageName) => {
                     if (pageName === '成本导入') {
                         return;
+                    } else if (pageName === '指标库') {
+                        window.location.href = 'indicator-library.html';
+                    } else if (pageName === '模板绑定') {
+                        window.location.href = 'base-template.html';
                     }
-                    window.location.href = 'base-template.html';
                 };
 
                 return {
