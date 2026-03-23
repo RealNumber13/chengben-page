@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的绩效 - 绩效管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar-bg { background-color: #587ef5; }
+        .sidebar-item { transition: all 0.2s ease; }
+        .sidebar-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .sidebar-item-active { background-color: #f1f5f9; color: #587ef5; font-weight: 600; }
+        .submenu-item { transition: all 0.2s ease; opacity: 0.9; }
+        .submenu-item:hover { background-color: rgba(255, 255, 255, 0.15); opacity: 1; }
+        .tab-item { cursor: pointer; transition: all 0.2s ease; }
+        .tab-item-active { background-color: #587ef5; color: white; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div id="app" class="flex h-screen">
+        <!-- 侧边栏导航 -->
+        <aside class="sidebar-bg w-64 text-white flex flex-col shrink-0 shadow-lg">
+            <!-- Logo 区域 -->
+            <div class="p-4 flex flex-col items-center border-b border-blue-400/30">
+                <div class="bg-white p-2 rounded-lg mb-2 shadow-md">
+                    <span class="text-blue-600 font-bold text-xl">XIAOTI</span>
+                </div>
+                <span class="text-xs opacity-80 uppercase tracking-widest">小题旅行</span>
+            </div>
+
+            <!-- 导航菜单 -->
+            <nav class="flex-1 mt-4 overflow-y-auto">
+                <div v-for="menu in menus" :key="menu.id">
+                    <!-- 一级菜单 -->
+                    <div 
+                        class="px-4 py-3 flex justify-between items-center cursor-pointer sidebar-item"
+                        @click="toggleMenu(menu.id)">
+                        <div class="flex items-center gap-3">
+                            <i :class="menu.icon" class="w-5 text-center"></i>
+                            <span class="font-medium">{{ menu.name }}</span>
+                        </div>
+                        <i 
+                            v-if="menu.subMenus.length > 0"
+                            :class="menu.open ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" 
+                            class="text-xs transition-transform">
+                        </i>
+                    </div>
+                    
+                    <!-- 二级菜单 -->
+                    <div v-if="menu.open && menu.subMenus.length > 0">
+                        <div 
+                            v-for="sub in menu.subMenus" 
+                            :key="sub.id"
+                            :class="['pl-12 py-2.5 cursor-pointer submenu-item', 
+                                     currentPage === sub.id ? 'sidebar-item-active' : '']"
+                            @click="navigateTo(sub.id)">
+                            <span class="text-sm">{{ sub.name }}</span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header 顶部导航栏 -->
+            <header class="bg-white h-16 flex items-center justify-between px-8 shadow-sm border-b border-gray-100">
+                <div class="flex items-center gap-4">
+                    <nav class="flex items-center gap-2 text-sm text-gray-600">
+                        <span>人事</span>
+                        <i class="fa-solid fa-chevron-right text-xs"></i>
+                        <span class="text-blue-600 font-medium">我的绩效</span>
+                    </nav>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <!-- 通知图标 -->
+                    <button class="relative text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                    </button>
+                    
+                    <!-- 帮助图标 -->
+                    <button class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="fa-solid fa-circle-question text-xl"></i>
+                    </button>
+                    
+                    <!-- 设置图标 -->
+                    <button class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="fa-solid fa-gear text-xl"></i>
+                    </button>
+                    
+                    <!-- 用户头像 -->
+                    <div class="flex items-center gap-2 ml-2">
+                        <img src="https://via.placeholder.com/32" alt="User" class="w-8 h-8 rounded-full">
+                        <span class="text-sm text-gray-700">沈嘉彤</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 主内容 -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- 用户信息卡片 -->
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <div class="flex items-center gap-4">
+                        <img src="https://via.placeholder.com/80" alt="User" class="w-20 h-20 rounded-full">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h2 class="text-2xl font-bold text-gray-800">沈嘉彤</h2>
+                                <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">营销</span>
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                <span class="mr-4">品牌营销事业部-营销部</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 待确认绩效数据 -->
+                <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fa-solid fa-circle-exclamation text-orange-500"></i>
+                        <h3 class="font-semibold text-gray-800">待确认绩效数据 (3)</h3>
+                    </div>
+                    <div class="space-y-2">
+                        <div v-for="item in pendingData" :key="item.id" class="bg-white rounded p-3 flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-1">
+                                    <span class="font-medium text-gray-800">{{ item.template }}</span>
+                                    <span class="text-sm text-gray-500">{{ item.period }}</span>
+                                </div>
+                                <div class="text-sm text-gray-600">
+                                    分数：{{ item.score }} ({{ item.level }}) - {{ item.dimension }}
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="text-red-500 hover:text-red-700 text-sm">
+                                    走绩
+                                </button>
+                                <button class="text-blue-600 hover:text-blue-800 text-sm">
+                                    确认
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 已确认绩效数据查看 -->
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <h3 class="font-semibold text-gray-800 mb-4">已确认绩效数据查看</h3>
+                    <div class="text-sm text-gray-600">
+                        (此处因块不同问效模板)
+                    </div>
+                </div>
+
+                <!-- 模板切换和绩效数据展示 -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <!-- 模板切换标签 -->
+                    <div class="flex items-center gap-2 mb-6 border-b border-gray-200">
+                        <div 
+                            v-for="template in templates" 
+                            :key="template.id"
+                            @click="activeTemplate = template.id"
+                            :class="['tab-item px-4 py-2 rounded-t-lg', 
+                                     activeTemplate === template.id ? 'tab-item-active' : 'text-gray-600 hover:bg-gray-100']">
+                            <i :class="template.icon" class="mr-2"></i>
+                            {{ template.name }}
+                        </div>
+                    </div>
+
+                    <!-- 当前模板的绩效数据 -->
+                    <div v-if="currentTemplateData">
+                        <!-- 绩效指标卡片 -->
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div v-for="metric in currentTemplateData.metrics" :key="metric.name" 
+                                 class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <i :class="metric.icon" class="text-blue-500"></i>
+                                    <span class="font-medium text-gray-700">{{ metric.name }}</span>
+                                </div>
+                                <div class="space-y-1 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">权重目标：</span>
+                                        <span class="text-gray-800">{{ metric.target }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">实际完成：</span>
+                                        <span class="text-gray-800">{{ metric.actual }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
+                                        <span class="text-gray-600">完成率：</span>
+                                        <span class="text-lg font-bold" :class="metric.rate >= 100 ? 'text-green-600' : 'text-orange-600'">
+                                            {{ metric.rate }}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 月度数据表格 -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-gray-700 font-medium">月份</th>
+                                        <th v-for="indicator in currentTemplateData.indicators" :key="indicator" 
+                                            class="px-4 py-3 text-center text-gray-700 font-medium">
+                                            {{ indicator }}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="month in currentTemplateData.monthlyData" :key="month.month" 
+                                        class="border-b border-gray-100 hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-gray-800">{{ month.month }}</td>
+                                        <td v-for="(value, index) in month.values" :key="index" 
+                                            class="px-4 py-3 text-center text-gray-700">
+                                            {{ value }}
+                                        </td>
+                                    </tr>
+                                    <tr class="bg-gray-50 font-medium">
+                                        <td class="px-4 py-3 text-gray-800">Q{{ currentTemplateData.quarter }}</td>
+                                        <td v-for="(value, index) in currentTemplateData.quarterData" :key="index" 
+                                            class="px-4 py-3 text-center text-gray-800">
+                                            {{ value }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 季度数据表格 -->
+                        <div class="overflow-x-auto mt-6">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-gray-700 font-medium">月份</th>
+                                        <th v-for="indicator in currentTemplateData.indicators2" :key="indicator" 
+                                            class="px-4 py-3 text-center text-gray-700 font-medium">
+                                            {{ indicator }}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="month in currentTemplateData.monthlyData2" :key="month.month" 
+                                        class="border-b border-gray-100 hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-gray-800">{{ month.month }}</td>
+                                        <td v-for="(value, index) in month.values" :key="index" 
+                                            class="px-4 py-3 text-center text-gray-700">
+                                            {{ value }}
+                                        </td>
+                                    </tr>
+                                    <tr class="bg-gray-50 font-medium">
+                                        <td class="px-4 py-3 text-gray-800">Q{{ currentTemplateData.quarter }}</td>
+                                        <td v-for="(value, index) in currentTemplateData.quarterData2" :key="index" 
+                                            class="px-4 py-3 text-center text-gray-800">
+                                            {{ value }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        createApp({
+            setup() {
+                const currentPage = ref('my-performance');
+                const currentDate = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+                const menus = ref([
+                    {
+                        id: 'office',
+                        name: '办公',
+                        icon: 'fa-solid fa-briefcase',
+                        open: false,
+                        subMenus: []
+                    },
+                    {
+                        id: 'customer',
+                        name: '客户',
+                        icon: 'fa-solid fa-users',
+                        open: false,
+                        subMenus: []
+                    },
+                    {
+                        id: 'project',
+                        name: '项目',
+                        icon: 'fa-solid fa-folder-open',
+                        open: false,
+                        subMenus: [
+                            { id: 'finance', name: '财务' }
+                        ]
+                    },
+                    {
+                        id: 'finance',
+                        name: '财务',
+                        icon: 'fa-solid fa-coins',
+                        open: false,
+                        subMenus: []
+                    },
+                    {
+                        id: 'hr',
+                        name: '人事',
+                        icon: 'fa-solid fa-user-tie',
+                        open: true,
+                        subMenus: [
+                            { id: 'indicator-library', name: '指标库' },
+                            { id: 'template-library', name: '模板库' },
+                            { id: 'template-binding', name: '模板绑定' },
+                            { id: 'performance-exam', name: '绩效考核' },
+                            { id: 'my-performance', name: '我的绩效' },
+                            { id: 'base-input', name: '基本录入' }
+                        ]
+                    },
+                    {
+                        id: 'settings',
+                        name: '设置',
+                        icon: 'fa-solid fa-gear',
+                        open: false,
+                        subMenus: []
+                    },
+                    {
+                        id: 'reports',
+                        name: '报表',
+                        icon: 'fa-solid fa-chart-bar',
+                        open: false,
+                        subMenus: []
+                    }
+                ]);
+
+                const toggleMenu = (menuId) => {
+                    const menu = menus.value.find(m => m.id === menuId);
+                    if (menu && menu.subMenus.length > 0) {
+                        menu.open = !menu.open;
+                    }
+                };
+
+                const navigateTo = (pageId) => {
+                    const pageMap = {
+                        'indicator-library': 'indicator-library.html',
+                        'template-library': 'template-library.html',
+                        'template-binding': 'base-template.html',
+                        'performance-exam': 'performance-exam.html',
+                        'my-performance': 'my-performance.html'
+                    };
+                    if (pageMap[pageId]) {
+                        window.location.href = pageMap[pageId];
+                    }
+                };
+
+                const activeTemplate = ref(1);
+
+                const pendingData = ref([
+                    {
+                        id: 1,
+                        template: '2025-Q4 绩效整体分',
+                        period: '阶段考核',
+                        score: '92.5 (优秀)',
+                        level: '优秀',
+                        dimension: '年度绩效K人能进度考核'
+                    },
+                    {
+                        id: 2,
+                        template: '2025-04 绩效整体分',
+                        period: '阶段考核',
+                        score: '92.5 (优秀)',
+                        level: '优秀',
+                        dimension: '年度绩效K人能进度考核'
+                    },
+                    {
+                        id: 3,
+                        template: '2025-03 绩效整体分',
+                        period: '阶段考核',
+                        score: '92.5 (优秀)',
+                        level: '优秀',
+                        dimension: '年度绩效K人能进度考核'
+                    }
+                ]);
+
+                const templates = ref([
+                    {
+                        id: 1,
+                        name: '本年度毛利',
+                        icon: 'fa-solid fa-chart-line',
+                        metrics: [
+                            { name: '本年度毛利', icon: 'fa-solid fa-chart-line', target: '0.00', actual: '0.00', rate: 0.00 },
+                            { name: '本年度毛利率', icon: 'fa-solid fa-percent', target: '0.00', actual: '0.00', rate: 0.00 },
+                            { name: '本年度NRR', icon: 'fa-solid fa-chart-pie', target: '0.00', actual: '0.00', rate: 0.00 }
+                        ],
+                        indicators: ['目标', '绩效', '绩效占比%', '目标', '绩效占比%', '主管打分', '目标', '绩效占比%', '主管打分'],
+                        monthlyData: [
+                            { month: '1月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '2月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '3月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: 'Q1', values: ['100', '0.00', '0.00%', '100', '0.00', '0.00%', '100', '0.00', '0.00%'] }
+                        ],
+                        quarterData: ['100', '0.00', '0.00%', '100', '0.00', '0.00%', '100', '0.00', '0.00%'],
+                        indicators2: ['目标', '绩效', '绩效占比%', '目标', '绩效占比%', '主管打分', '目标', '绩效占比%', '主管打分'],
+                        monthlyData2: [
+                            { month: '1月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '2月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '3月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] }
+                        ],
+                        quarterData2: ['100', '0.00', '0.00%', '100', '0.00', '0.00%', '100', '0.00', '0.00%'],
+                        quarter: 1
+                    },
+                    {
+                        id: 2,
+                        name: '本季度毛利',
+                        icon: 'fa-solid fa-calendar-days',
+                        metrics: [
+                            { name: '本季度毛利', icon: 'fa-solid fa-chart-line', target: '0.00', actual: '0.00', rate: 0.00 },
+                            { name: '本季度毛利率', icon: 'fa-solid fa-percent', target: '0.00', actual: '0.00', rate: 0.00 },
+                            { name: '本季度NRR', icon: 'fa-solid fa-chart-pie', target: '0.00', actual: '0.00', rate: 0.00 }
+                        ],
+                        indicators: ['目标', '绩效', '绩效占比%', '目标', '绩效占比%', '主管打分', '目标', '绩效占比%', '主管打分'],
+                        monthlyData: [
+                            { month: '1月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '2月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '3月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] }
+                        ],
+                        quarterData: ['100', '0.00', '0.00%', '100', '0.00', '0.00%', '100', '0.00', '0.00%'],
+                        indicators2: ['目标', '绩效', '绩效占比%', '目标', '绩效占比%', '主管打分', '目标', '绩效占比%', '主管打分'],
+                        monthlyData2: [
+                            { month: '1月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '2月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '3月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] }
+                        ],
+                        quarterData2: ['100', '0.00', '0.00%', '100', '0.00', '0.00%', '100', '0.00', '0.00%'],
+                        quarter: 1
+                    },
+                    {
+                        id: 3,
+                        name: '本季度取值',
+                        icon: 'fa-solid fa-database',
+                        metrics: [
+                            { name: '本季度取值', icon: 'fa-solid fa-chart-line', target: '0.00', actual: '0.00', rate: 0.00 },
+                            { name: '本季度毛利率', icon: 'fa-solid fa-percent', target: '0.00', actual: '0.00', rate: 0.00 },
+                            { name: '本季度NRR', icon: 'fa-solid fa-chart-pie', target: '0.00', actual: '0.00', rate: 0.00 }
+                        ],
+                        indicators: ['目标', '绩效', '绩效占比%', '目标', '绩效占比%', '主管打分', '目标', '绩效占比%', '主管打分'],
+                        monthlyData: [
+                            { month: '1月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '2月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '3月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] }
+                        ],
+                        quarterData: ['100', '0.00', '0.00%', '100', '0.00', '0.00%', '100', '0.00', '0.00%'],
+                        indicators2: ['目标', '绩效', '绩效占比%', '目标', '绩效占比%', '主管打分', '目标', '绩效占比%', '主管打分'],
+                        monthlyData2: [
+                            { month: '1月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '2月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] },
+                            { month: '3月', values: ['0.00', '0.00%', '0.00', '0.00%', '0.00%', '', '0.00', '0.00%', ''] }
+                        ],
+                        quarterData2: ['100', '0.00', '0.00%', '100', '0.00', '0.00%', '100', '0.00', '0.00%'],
+                        quarter: 1
+                    }
+                ]);
+
+                const currentTemplateData = computed(() => {
+                    return templates.value.find(t => t.id === activeTemplate.value);
+                });
+
+                return {
+                    currentPage,
+                    currentDate,
+                    menus,
+                    toggleMenu,
+                    navigateTo,
+                    activeTemplate,
+                    pendingData,
+                    templates,
+                    currentTemplateData
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

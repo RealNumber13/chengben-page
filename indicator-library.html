@@ -249,32 +249,36 @@
                             <label class="w-24 text-sm text-gray-700 pt-2 text-right">是否手动录入</label>
                             <div class="flex-1 flex items-center gap-6 pt-2">
                                 <label class="flex items-center gap-2 cursor-pointer">
-                                    <input v-model="newIndicator.manualInput" type="radio" :value="true" class="w-4 h-4 text-blue-600">
+                                    <input v-model="newIndicator.manualInput" type="radio" value="启用" class="w-4 h-4 text-blue-600">
                                     <span class="text-sm text-gray-700">启用</span>
                                 </label>
                                 <label class="flex items-center gap-2 cursor-pointer">
-                                    <input v-model="newIndicator.manualInput" type="radio" :value="false" class="w-4 h-4 text-blue-600">
+                                    <input v-model="newIndicator.manualInput" type="radio" value="停用" class="w-4 h-4 text-blue-600">
                                     <span class="text-sm text-gray-700">停用</span>
                                 </label>
+                                <span class="text-xs text-red-500 ml-4">单选项：是、否</span>
                             </div>
                         </div>
 
                         <!-- 单位 -->
                         <div class="flex items-start gap-4">
                             <label class="w-24 text-sm text-gray-700 pt-2 text-right">单位</label>
-                            <div class="flex-1 flex items-center gap-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input v-model="newIndicator.unit" type="radio" value="元" class="w-4 h-4 text-blue-600">
-                                    <span class="text-sm text-gray-700">元</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input v-model="newIndicator.unit" type="radio" value="百分比" class="w-4 h-4 text-blue-600">
-                                    <span class="text-sm text-gray-700">百分比</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input v-model="newIndicator.unit" type="radio" value="完成率" class="w-4 h-4 text-blue-600">
-                                    <span class="text-sm text-gray-700">完成率</span>
-                                </label>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-4 pt-2">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input v-model="newIndicator.unit" type="radio" value="元" class="w-4 h-4 text-blue-600">
+                                        <span class="text-sm text-gray-700">元</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input v-model="newIndicator.unit" type="radio" value="百分比" class="w-4 h-4 text-blue-600">
+                                        <span class="text-sm text-gray-700">百分比</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input v-model="newIndicator.unit" type="radio" value="完成率" class="w-4 h-4 text-blue-600">
+                                        <span class="text-sm text-gray-700">完成率</span>
+                                    </label>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">字段改为：当前状态：启用、停用</p>
                             </div>
                         </div>
 
@@ -282,7 +286,21 @@
                         <div class="flex items-start gap-4">
                             <label class="w-24 text-sm text-gray-700 pt-2 text-right">指标属性</label>
                             <div class="flex-1">
-                                <input v-model="newIndicator.attribute" type="text" placeholder="目标" class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+                                <div class="flex items-center gap-4 pt-2">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input v-model="newIndicator.attribute" type="radio" value="指标" class="w-4 h-4 text-blue-600">
+                                        <span class="text-sm text-gray-700">指标</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input v-model="newIndicator.attribute" type="radio" value="目标" class="w-4 h-4 text-blue-600">
+                                        <span class="text-sm text-gray-700">目标</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input v-model="newIndicator.attribute" type="radio" value="完成率" class="w-4 h-4 text-blue-600">
+                                        <span class="text-sm text-gray-700">完成率</span>
+                                    </label>
+                                </div>
+                                <p class="text-xs text-red-500 mt-2">指标属性单选项：指标、目标、完成率</p>
                             </div>
                         </div>
 
@@ -398,9 +416,9 @@
                 const newIndicator = ref({
                     dataSource: '',
                     name: '',
-                    manualInput: true,
+                    manualInput: '启用',
                     unit: '元',
-                    attribute: '',
+                    attribute: '指标',
                     formula: '',
                     note: ''
                 });
@@ -467,6 +485,8 @@
                         window.location.href = 'template-library.html';
                     } else if (pageId === 'performance-exam') {
                         window.location.href = 'performance-exam.html';
+                    } else if (pageId === 'my-performance') {
+                        window.location.href = 'my-performance.html';
                     } else {
                         currentPage.value = pageId;
                     }
